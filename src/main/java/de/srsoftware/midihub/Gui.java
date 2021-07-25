@@ -55,8 +55,7 @@ public class Gui extends JFrame {
                     return;
             }
             LOG.info("Monitoring {}. Class: {}",deviceInfo,device.getClass().getSimpleName());
-        } catch (MidiUnavailableException e) {
-            e.printStackTrace();
+        } catch (Exception e) {
         }
     }
 }
