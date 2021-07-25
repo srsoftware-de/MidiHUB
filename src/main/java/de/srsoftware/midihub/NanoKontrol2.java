@@ -1,7 +1,5 @@
 package de.srsoftware.midihub;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.sound.midi.*;
 import java.util.HashSet;
@@ -60,8 +58,8 @@ public class NanoKontrol2 implements Receiver {
     private static final int PLAY = 41;
     private static final int REC = 45;
 
-    private static Logger LOG = LoggerFactory.getLogger(NanoKontrol2.class);
     private final MidiDevice device;
+    private Logger logger;
 
     public NanoKontrol2(MidiDevice device) throws MidiUnavailableException {
         this.device = device;
@@ -71,7 +69,7 @@ public class NanoKontrol2 implements Receiver {
 
     @Override
     public void send(MidiMessage midiMessage, long l) {
-        LOG.info("Message received: {} ({})",midiMessage,midiMessage.getClass().getSimpleName());
+        logger.log("Message received: {} ({})",midiMessage,midiMessage.getClass().getSimpleName());
 
         if (midiMessage instanceof ShortMessage) {
             handle((ShortMessage)midiMessage);
@@ -152,35 +150,35 @@ public class NanoKontrol2 implements Receiver {
                 changeMarker(+1);
                 break;
             default:
-                LOG.info("ControlChange @ channel {}: {} / {}",channel,data1,data2);
+                logger.log("ControlChange @ channel {}: {} / {}",channel,data1,data2);
         }
     }
 
     private void changeMarker(int delta) {
-        LOG.info("{} marker",delta > 0 ? "increasing":"decreasing");
+        logger.log("{} marker",delta > 0 ? "increasing":"decreasing");
     }
     private void changeTrack(int delta) {
-        LOG.info("{} track",delta > 0 ? "increasing":"decreasing");
+        logger.log("{} track",delta > 0 ? "increasing":"decreasing");
     }
 
     private void handleRec(int num, boolean b) {
-        LOG.info("Record {} → {}",num,b ? "on" : "off");
+        logger.log("Record {} → {}",num,b ? "on" : "off");
     }
 
     private void handleSolo(int num, boolean b) {
-        LOG.info("Solo {} → {}",num,b ? "on" : "off");
+        logger.log("Solo {} → {}",num,b ? "on" : "off");
     }
 
     private void handleMute(int num, boolean b) {
-        LOG.info("Mute {} → {}",num,b ? "on" : "off");
+        logger.log("Mute {} → {}",num,b ? "on" : "off");
     }
 
     private void handlePoti(int num, int level) {
-        LOG.info("Poti {} → {}",num,level);
+        logger.log("Poti {} → {}",num,level);
     }
 
     private void handleFader(int num, int level) {
-        LOG.info("Fader {} → {}",num,level);
+        logger.log("Fader {} → {}",num,level);
     }
 
     @Override
@@ -188,4 +186,7 @@ public class NanoKontrol2 implements Receiver {
         device.close();
     }
 
+    public void setLogger(Logger logger) {
+        this.logger = logger;
+    }
 }

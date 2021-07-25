@@ -10,6 +10,7 @@ import java.util.Vector;
 public class DeviceList extends JList<MidiDevice.Info> {
 
     private static Logger LOG = LoggerFactory.getLogger(DeviceList.class);
+    private LogList logger;
 
     DeviceList(){
         thread().start();

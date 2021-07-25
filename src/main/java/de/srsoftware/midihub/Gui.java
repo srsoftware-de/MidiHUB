@@ -11,23 +11,38 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
-import java.util.HashMap;
-import java.util.Locale;
+import java.util.*;
+import java.util.logging.LogManager;
 
 public class Gui extends JFrame {
     private static Logger LOG = LoggerFactory.getLogger(Gui.class);
     private static final String NANOKONTROL2 = "nanokontrol2";
     private final DeviceList deviceList;
     private final HashMap<MidiDevice, Receiver> devices = new HashMap<>();
+    private final MixerPanel mixerPanel;
+    private final LogList logList;
+
     Gui(){
         super("MidiHub");
 
         setLayout(new BorderLayout());
 
+        logList = new LogList();
+        logList.setSize(new Dimension(600,600));
+        logList.ensureIndexIsVisible(50);
+
+        JScrollPane logScroll = new JScrollPane();
+        logScroll.setPreferredSize(new Dimension(600,600));
+        logScroll.add(logList);
+        add(logScroll,BorderLayout.CENTER);
+
         deviceList = new DeviceList();
         deviceList.setPreferredSize(new Dimension(300,600));
         add(deviceList,BorderLayout.WEST);
-        add(new JLabel("Test"),BorderLayout.CENTER);
+
+        mixerPanel = new MixerPanel();
+        add(mixerPanel,BorderLayout.NORTH);
+
         pack();
         setLocationRelativeTo(null);
         setVisible(true);
@@ -40,7 +55,7 @@ public class Gui extends JFrame {
             MidiDevice device = MidiSystem.getMidiDevice(deviceInfo);
 
             if (devices.containsKey(device)){
-                LOG.info("Already connected to {}.",deviceInfo);
+                logList.log("Already connected to {}.",deviceInfo);
                 return;
             }
 
@@ -48,13 +63,14 @@ public class Gui extends JFrame {
             switch (name){
                 case NANOKONTROL2:
                     NanoKontrol2 receiver = new NanoKontrol2(device);
+                    receiver.setLogger(logList);
                     devices.put(device,receiver);
                     break;
                 default:
-                    LOG.info("Unknown device: {}, Class: {}",name,device.getClass().getSimpleName());
+                    logList.log("Unknown device: {}, Class: {}",name,device.getClass().getSimpleName());
                     return;
             }
-            LOG.info("Monitoring {}. Class: {}",deviceInfo,device.getClass().getSimpleName());
+            logList.log("Monitoring {}. Class: {}",deviceInfo,device.getClass().getSimpleName());
         } catch (Exception e) {
         }
     }
