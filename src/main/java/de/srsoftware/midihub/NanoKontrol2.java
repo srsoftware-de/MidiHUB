@@ -88,6 +88,7 @@ public class NanoKontrol2 implements Control {
         switch (command){
             case ShortMessage.CONTROL_CHANGE:
                 handleControlChange(msg.getChannel(),msg.getData1(),msg.getData2());
+                break;
             default:
                 logger.log("Unexpected command type: {}",command);
         }
