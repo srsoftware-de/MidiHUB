@@ -1,7 +1,5 @@
 package de.srsoftware.midihub.mixers;
 
-import javax.sound.midi.Receiver;
-
 public interface Mixer {
     void disconnect();
 
@@ -11,11 +9,11 @@ public interface Mixer {
 
     void changeTrack(int delta);
 
-    void handleSolo(int num, boolean enabled);
+    boolean handleSolo(int num, boolean enabled);
 
-    void handleRec(int num, boolean enabled);
+    boolean handleRec(int num, boolean enabled);
 
-    void handleMute(int num, boolean enabled);
+    boolean handleMute(int num, boolean enabled);
 
 
     void handlePoti(int num, float percent);

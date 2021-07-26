@@ -39,6 +39,7 @@ public class M32C implements Mixer {
     private float [][] channels = new float[17][CHANNELS];
     private float[] gain = new float[CHANNELS];
     private float[] pan = new float[CHANNELS];
+    private boolean[] mutes = new boolean[CHANNELS];
     private int lastChannel = 0;
 
     public M32C(String host, int port, de.srsoftware.midihub.ui.Logger logger) throws IOException {
@@ -139,7 +140,7 @@ public class M32C implements Mixer {
     }
 
     @Override
-    public void handleSolo(int num, boolean enabled) {
+    public boolean handleSolo(int num, boolean enabled) {
         try {
             num += offset;
             String channel = (num < 10 ? "0" : "") + num;
@@ -152,19 +153,22 @@ public class M32C implements Mixer {
         } catch (IOException | OSCSerializeException e) {
             e.printStackTrace();
         }
+        return enabled;
     }
 
     @Override
-    public void handleRec(int num, boolean enabled) {
+    public boolean handleRec(int num, boolean enabled) {
 
+        return enabled;
     }
 
     @Override
-    public void handleMute(int num, boolean enabled) {
+    public boolean handleMute(int num, boolean enabled) {
         try {
             num += offset;
             String channel = (num < 10 ? "0" : "") + num;
-
+            enabled = !mutes[num-1];
+            mutes[num-1] = enabled;
             Vector<Object> args = new Vector<>();
             args.add(enabled?0:1);
             OSCMessage message = new OSCMessage("/ch/"+channel+"/mix/on", args);
@@ -173,6 +177,7 @@ public class M32C implements Mixer {
         } catch (IOException | OSCSerializeException e) {
             e.printStackTrace();
         }
+        return enabled;
     }
 
     @Override

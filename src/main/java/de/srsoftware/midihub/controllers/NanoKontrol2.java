@@ -4,10 +4,13 @@ package de.srsoftware.midihub.controllers;
 import de.srsoftware.midihub.Device;
 import de.srsoftware.midihub.ui.Logger;
 import de.srsoftware.midihub.mixers.Mixer;
+import org.slf4j.LoggerFactory;
 
 import javax.sound.midi.*;
+import java.util.List;
 
 public class NanoKontrol2 implements Control, Transmitter {
+    private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(NanoKontrol2.class);
     private static final int LANES = 8;
     private static final int FADER1 = 0;
     private static final int FADER2 = 1;
@@ -71,17 +74,9 @@ public class NanoKontrol2 implements Control, Transmitter {
         device.getInDevice().open();
         device.getInDevice().getTransmitter().setReceiver(this);
 
-        device.getOutDevice().open();
-        setReceiver(device.getOutDevice().getReceiver());
-
-        for (int i=1; i<64; i++) {
-            ShortMessage message = new ShortMessage();
-            message.setMessage(ShortMessage.CONTROL_CHANGE, 0, i, 0);
-            receiver.send(message, -1);
-            message = new ShortMessage();
-            message.setMessage(ShortMessage.CONTROL_CHANGE, 1, i, 0);
-            receiver.send(message, -1);
-        }
+        MidiDevice out = device.getOutDevice();
+        out.open();
+        receiver = out.getReceiver();
     }
 
     @Override
@@ -101,21 +96,19 @@ public class NanoKontrol2 implements Control, Transmitter {
 
     private void handle(ShortMessage msg) {
         int command = msg.getCommand();
-        System.err.println("Command: "+command);
-        System.err.println("Channel: "+msg.getChannel());
-        System.err.println("D1: "+msg.getData1());
-        System.err.println("D2: "+msg.getData2());
         switch (command){
             case ShortMessage.CONTROL_CHANGE:
                 handleControlChange(msg.getChannel(),msg.getData1(),msg.getData2());
                 break;
             default:
                 logger.log("Unexpected command type: {}",command);
+                LOG.info("Command: {}, channel {}, data 1: {}, data 2: {}",command,msg.getChannel(),msg.getData1(),msg.getData2());
         }
     }
 
     private void handleControlChange(int channel, int data1, int data2) {
-        if (mixer != null)
+        if (mixer == null) return;
+        boolean enabled;
         switch (data1) {
             case FADER1:
             case FADER2:
@@ -145,7 +138,8 @@ public class NanoKontrol2 implements Control, Transmitter {
             case MUTE6:
             case MUTE7:
             case MUTE8:
-                mixer.handleMute(data1-MUTE1+1,data2>0);
+                enabled = mixer.handleMute(data1-MUTE1+1,data2>0);
+                setLed(data1,enabled);
                 break;
             case RECORD1:
             case RECORD2:
@@ -155,7 +149,8 @@ public class NanoKontrol2 implements Control, Transmitter {
             case RECORD6:
             case RECORD7:
             case RECORD8:
-                mixer.handleRec(data1-RECORD1+1,data2>0);
+                enabled = mixer.handleRec(data1-RECORD1+1,data2>0);
+                setLed(data1,enabled);
                 break;
             case SOLO1:
             case SOLO2:
@@ -165,7 +160,8 @@ public class NanoKontrol2 implements Control, Transmitter {
             case SOLO6:
             case SOLO7:
             case SOLO8:
-                mixer.handleSolo(data1-SOLO1+1,data2>0);
+                enabled = mixer.handleSolo(data1-SOLO1+1,data2>0);
+                setLed(data1,enabled);
                 break;
             case TRACK_L:
                 mixer.changeTrack(-LANES);
@@ -204,5 +200,15 @@ public class NanoKontrol2 implements Control, Transmitter {
 
     public void setLogger(Logger logger) {
         this.logger = logger;
+    }
+
+    public void setLed(int led,boolean enable){
+        try {
+            ShortMessage message = new ShortMessage();
+            message.setMessage(ShortMessage.CONTROL_CHANGE, 0, led, enable ? 127 : 0);
+            receiver.send(message, -1);
+        } catch (InvalidMidiDataException e) {
+            e.printStackTrace();
+        }
     }
 }
