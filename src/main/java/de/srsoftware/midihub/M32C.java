@@ -90,7 +90,20 @@ public class M32C implements Mixer {
 
     @Override
     public void handleSolo(int num, boolean enabled) {
+        try {
+            num += offset;
+            String channel = (num < 10 ? "0" : "") + num;
 
+            Vector<Object> args = new Vector<>();
+            args.add(enabled?1:0);
+            OSCMessage message = new OSCMessage("/-stat/solosw/"+channel, args);
+            server.send(message);
+            logger.log("sent OSC: {}  : {}",message.getAddress(),enabled?"ON":"OFF");
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (OSCSerializeException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
@@ -100,23 +113,36 @@ public class M32C implements Mixer {
 
     @Override
     public void handleMute(int num, boolean enabled) {
+        try {
+            num += offset;
+            String channel = (num < 10 ? "0" : "") + num;
 
+            Vector<Object> args = new Vector<>();
+            args.add(enabled?0:1);
+            OSCMessage message = new OSCMessage("/ch/"+channel+"/mix/on", args);
+            server.send(message);
+            logger.log("sent OSC: {}  : {}",message.getAddress(),enabled?"ON":"OFF");
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (OSCSerializeException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
     public void handlePoti(int num, float percent) {
-
-        num += offset;
-
-        float new_val = percent / 100;
-
-        String channel = (num < 10 ? "0" : "") + num;
-
-        Vector<Object> args = new Vector<>();
-        args.add(new_val);
-
-        OSCMessage message = new OSCMessage("/ch/"+channel+"/preamp/trim", args);
         try {
+
+            num += offset;
+
+            float new_val = percent / 100;
+
+            String channel = (num < 10 ? "0" : "") + num;
+
+            Vector<Object> args = new Vector<>();
+            args.add(new_val);
+
+            OSCMessage message = new OSCMessage("/ch/"+channel+"/preamp/trim", args);
             server.send(message);
             logger.log("sent OSC: {}  : {}",message.getAddress(),new_val);
         } catch (IOException e) {
