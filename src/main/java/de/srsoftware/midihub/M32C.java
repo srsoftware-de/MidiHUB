@@ -39,6 +39,7 @@ public class M32C implements Mixer {
     private float [][] channels = new float[17][CHANNELS];
     private float[] gain = new float[CHANNELS];
     private float[] pan = new float[CHANNELS];
+    private int lastChannel = 0;
 
     public M32C(String host, int port, de.srsoftware.midihub.Logger logger) throws IOException {
         this.logger = logger;
@@ -70,9 +71,9 @@ public class M32C implements Mixer {
         highlightBus(bus);
     }
 
-    private void unhighlightBus(int mix) {
+    public void unhighlightBus(int bus) {
         try {
-            String channel = (mix < 10 ? "0" : "") + mix;
+            String channel = (bus < 10 ? "0" : "") + bus;
             Vector<Integer> args = new Vector<>();
             args.add(1);
             OSCMessage message = new OSCMessage("/bus/"+channel+"/config/color", args);
@@ -83,9 +84,9 @@ public class M32C implements Mixer {
         }
     }
 
-    private void highlightBus(int mix) {
+    public void highlightBus(int bus) {
         try {
-            String channel = (mix < 10 ? "0" : "") + mix;
+            String channel = (bus < 10 ? "0" : "") + bus;
             Vector<Integer> args = new Vector<>();
             args.add(3);
             OSCMessage message = new OSCMessage("/bus/"+channel+"/config/color", args);
@@ -99,16 +100,17 @@ public class M32C implements Mixer {
     @Override
     public void changeTrack(int delta) {
         int count = Math.abs(delta);
-        unhighlight(count);
+        unhighlightFaderGroup(count);
         offset = (offset+delta);
         if (offset+delta>CHANNELS) offset=0;
         if (offset<0) offset = CHANNELS+delta;
-        highlight(count);
+        highlightFaderGroup(count);
     }
 
-    public void highlight( int count) {
+    public void highlightFaderGroup(int count) {
         for (int i=offset+1; i<=offset+count; i++){
             try {
+                lastChannel = 0;
                 String channel = (i < 10 ? "0" : "") + i;
                 Vector<Integer> args = new Vector<>();
                 args.add(9);
@@ -121,7 +123,7 @@ public class M32C implements Mixer {
         }
     }
 
-    public void unhighlight(int count) {
+    public void unhighlightFaderGroup(int count) {
         for (int i=offset+1; i<=offset+count; i++){
             try {
                 String channel = (i < 10 ? "0" : "") + i;
@@ -235,6 +237,11 @@ public class M32C implements Mixer {
     public void handleFader(int num, float percent) {
 
         num += offset;
+        if (num != lastChannel) {
+            unhighlightChannel(lastChannel);
+            highlightChannel(num);
+            lastChannel = num;
+        }
 
         float new_val = percent / 100;
         float old_val = channels[bus][num-1];
@@ -256,5 +263,35 @@ public class M32C implements Mixer {
         } catch (IOException | OSCSerializeException e) {
             e.printStackTrace();
         }
+    }
+
+    @Override
+    public void highlightChannel(int num) {
+        try {
+            Vector<Object> args = new Vector<>();
+            args.add(1);
+            String channel = (num < 10 ? "0" : "") + num;
+            OSCMessage message = new OSCMessage("/ch/"+channel+"/config/color", args);
+            server.send(message);
+            logger.log("sent OSC: {}  : {}",message.getAddress(),args);
+        } catch (IOException | OSCSerializeException e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    @Override
+    public void unhighlightChannel(int num) {
+        try {
+            Vector<Object> args = new Vector<>();
+            args.add(9);
+            String channel = (num < 10 ? "0" : "") + num;
+            OSCMessage message = new OSCMessage("/ch/"+channel+"/config/color", args);
+            server.send(message);
+            logger.log("sent OSC: {}  : {}",message.getAddress(),args);
+        } catch (IOException | OSCSerializeException e) {
+            e.printStackTrace();
+        }
+
     }
 }

@@ -1,14 +1,7 @@
 package de.srsoftware.midihub;
 
 
-import com.illposed.osc.OSCMessage;
-import com.illposed.osc.OSCSerializeException;
-import com.illposed.osc.transport.udp.OSCPortOut;
-
 import javax.sound.midi.*;
-import java.io.IOException;
-import java.net.InetAddress;
-import java.util.Vector;
 
 public class NanoKontrol2 implements Control {
     private static final int LANES = 8;
@@ -77,7 +70,7 @@ public class NanoKontrol2 implements Control {
     @Override
     public void assign(Mixer mixer) {
         this.mixer = mixer;
-        mixer.highlight(LANES);
+        mixer.highlightFaderGroup(LANES);
     }
 
     @Override
@@ -95,6 +88,8 @@ public class NanoKontrol2 implements Control {
         switch (command){
             case ShortMessage.CONTROL_CHANGE:
                 handleControlChange(msg.getChannel(),msg.getData1(),msg.getData2());
+            default:
+                logger.log("Unexpected command type: {}",command);
         }
     }
 
@@ -170,7 +165,7 @@ public class NanoKontrol2 implements Control {
 
     @Override
     public void close() {
-        mixer.unhighlight(LANES);
+        mixer.unhighlightFaderGroup(LANES);
         mixer.close();
         device.close();
     }

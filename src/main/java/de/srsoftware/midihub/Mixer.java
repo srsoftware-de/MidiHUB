@@ -3,7 +3,7 @@ package de.srsoftware.midihub;
 import javax.sound.midi.Receiver;
 
 public interface Mixer {
-    public void disconnect();
+    void disconnect();
 
     void close();
 
@@ -22,6 +22,12 @@ public interface Mixer {
 
     void handleFader(int num, float percent);
 
-    public void highlight(int count);
-    public void unhighlight(int count);
+    void highlightChannel(int num);
+    void unhighlightChannel(int num);
+
+    void highlightFaderGroup(int count);
+    void unhighlightFaderGroup(int count);
+
+    void highlightBus(int bus);
+    void unhighlightBus(int bus);
 }
