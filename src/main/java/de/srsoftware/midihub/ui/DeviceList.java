@@ -1,4 +1,4 @@
-package de.srsoftware.midihub;
+package de.srsoftware.midihub.ui;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,7 +12,7 @@ public class DeviceList extends JList<MidiDevice.Info> {
     private static Logger LOG = LoggerFactory.getLogger(DeviceList.class);
     private LogList logger;
 
-    DeviceList(){
+    public DeviceList(){
         thread().start();
     }
 

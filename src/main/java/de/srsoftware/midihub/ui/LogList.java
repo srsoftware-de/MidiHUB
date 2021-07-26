@@ -1,14 +1,6 @@
-package de.srsoftware.midihub;
-
-import ch.qos.logback.core.Appender;
-import ch.qos.logback.core.Context;
-import ch.qos.logback.core.LogbackException;
-import ch.qos.logback.core.filter.Filter;
-import ch.qos.logback.core.spi.FilterReply;
-import ch.qos.logback.core.status.Status;
+package de.srsoftware.midihub.ui;
 
 import javax.swing.*;
-import java.util.List;
 import java.util.Vector;
 
 public class LogList extends JList<String> implements Logger {

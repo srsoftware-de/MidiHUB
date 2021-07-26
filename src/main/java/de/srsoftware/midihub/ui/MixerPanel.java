@@ -1,10 +1,10 @@
-package de.srsoftware.midihub;
+package de.srsoftware.midihub.ui;
 
-import com.illposed.osc.transport.udp.OSCPortOut;
+import de.srsoftware.midihub.mixers.M32C;
+import de.srsoftware.midihub.mixers.Mixer;
 
 import javax.swing.*;
 import java.awt.*;
-import java.net.InetAddress;
 
 public class MixerPanel extends JPanel {
     private final JTextField port;

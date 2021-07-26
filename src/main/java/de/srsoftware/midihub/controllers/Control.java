@@ -1,4 +1,6 @@
-package de.srsoftware.midihub;
+package de.srsoftware.midihub.controllers;
+
+import de.srsoftware.midihub.mixers.Mixer;
 
 import javax.sound.midi.Receiver;
 

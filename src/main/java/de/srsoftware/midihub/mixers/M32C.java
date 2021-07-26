@@ -1,4 +1,4 @@
-package de.srsoftware.midihub;
+package de.srsoftware.midihub.mixers;
 
 import com.illposed.osc.OSCMessage;
 import com.illposed.osc.OSCSerializeException;
@@ -14,7 +14,7 @@ public class M32C implements Mixer {
     private static final Logger LOG = LoggerFactory.getLogger(M32C.class);
     private static final int CHANNELS = 32;
     private final OSCPortOut server;
-    private de.srsoftware.midihub.Logger logger;
+    private de.srsoftware.midihub.ui.Logger logger;
 
     private static final int MAIN = 0;
     private static final int BUS1 = 1;
@@ -41,7 +41,7 @@ public class M32C implements Mixer {
     private float[] pan = new float[CHANNELS];
     private int lastChannel = 0;
 
-    public M32C(String host, int port, de.srsoftware.midihub.Logger logger) throws IOException {
+    public M32C(String host, int port, de.srsoftware.midihub.ui.Logger logger) throws IOException {
         this.logger = logger;
         server = new OSCPortOut(InetAddress.getByName(host),port);
         logger.log("Connected to {} @ {}:{}",getClass().getSimpleName(),host,port);

@@ -1,18 +1,15 @@
-package de.srsoftware.midihub;
+package de.srsoftware.midihub.ui;
 
+import de.srsoftware.midihub.controllers.Control;
+import de.srsoftware.midihub.controllers.NanoKontrol2;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.sound.midi.MidiDevice;
 import javax.sound.midi.MidiSystem;
-import javax.sound.midi.MidiUnavailableException;
-import javax.sound.midi.Receiver;
 import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.util.*;
-import java.util.logging.LogManager;
 
 public class Gui extends JFrame {
     private static Logger LOG = LoggerFactory.getLogger(Gui.class);
@@ -22,7 +19,7 @@ public class Gui extends JFrame {
     private final MixerPanel mixerPanel;
     private final LogList logList;
 
-    Gui(){
+    public Gui(){
         super("MidiHub");
 
         setLayout(new BorderLayout());
