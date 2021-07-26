@@ -1,21 +1,20 @@
 package de.srsoftware.midihub.ui;
 
+import de.srsoftware.midihub.Device;
 import de.srsoftware.midihub.controllers.Control;
 import de.srsoftware.midihub.controllers.NanoKontrol2;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.sound.midi.MidiDevice;
-import javax.sound.midi.MidiSystem;
 import javax.swing.*;
 import java.awt.*;
 import java.util.*;
 
 public class Gui extends JFrame {
     private static Logger LOG = LoggerFactory.getLogger(Gui.class);
-    private static final String NANOKONTROL2 = "nanokontrol2";
+    private static final String NANOKONTROL2 = "nanoKONTROL2";
     private final DeviceList deviceList;
-    private final HashMap<MidiDevice, Control> devices = new HashMap<>();
+    private final HashMap<Device, Control> devices = new HashMap<>();
     private final MixerPanel mixerPanel;
     private final LogList logList;
 
@@ -57,27 +56,25 @@ public class Gui extends JFrame {
 
     }
 
-    private void monitorDevice(MidiDevice.Info deviceInfo) {
+    private void monitorDevice(Device midiInfo) {
         try {
-            MidiDevice device = MidiSystem.getMidiDevice(deviceInfo);
 
-            if (devices.containsKey(device)){
-                logList.log("Already connected to {}.",deviceInfo);
+            if (devices.containsKey(midiInfo)){
+                logList.log("Already connected to {}.",midiInfo);
                 return;
             }
 
-            String name = deviceInfo.getName().split(" ", 2)[0].toLowerCase(Locale.ROOT);
-            switch (name){
+            switch (midiInfo.shortName()){
                 case NANOKONTROL2:
-                    NanoKontrol2 receiver = new NanoKontrol2(device);
+                    NanoKontrol2 receiver = new NanoKontrol2(midiInfo);
                     receiver.setLogger(logList);
-                    devices.put(device,receiver);
+                    devices.put(midiInfo,receiver);
                     break;
                 default:
-                    logList.log("Unknown device: {}, Class: {}",name,device.getClass().getSimpleName());
+                    logList.log("Unknown device: {}",midiInfo.shortName());
                     return;
             }
-            logList.log("Monitoring {}. Class: {}",deviceInfo,device.getClass().getSimpleName());
+            logList.log("Monitoring {}.",midiInfo);
         } catch (Exception e) {
         }
     }

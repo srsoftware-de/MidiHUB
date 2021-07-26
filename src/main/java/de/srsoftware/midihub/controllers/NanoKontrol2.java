@@ -1,12 +1,13 @@
 package de.srsoftware.midihub.controllers;
 
 
+import de.srsoftware.midihub.Device;
 import de.srsoftware.midihub.ui.Logger;
 import de.srsoftware.midihub.mixers.Mixer;
 
 import javax.sound.midi.*;
 
-public class NanoKontrol2 implements Control {
+public class NanoKontrol2 implements Control, Transmitter {
     private static final int LANES = 8;
     private static final int FADER1 = 0;
     private static final int FADER2 = 1;
@@ -60,14 +61,27 @@ public class NanoKontrol2 implements Control {
     private static final int PLAY = 41;
     private static final int REC = 45;
 
-    private final MidiDevice device;
+    private final Device device;
     private Logger logger;
     private Mixer mixer;
+    private Receiver receiver;
 
-    public NanoKontrol2(MidiDevice device) throws MidiUnavailableException {
+    public NanoKontrol2(Device device) throws MidiUnavailableException, InvalidMidiDataException {
         this.device = device;
-        device.open();
-        device.getTransmitter().setReceiver(this);
+        device.getInDevice().open();
+        device.getInDevice().getTransmitter().setReceiver(this);
+
+        device.getOutDevice().open();
+        setReceiver(device.getOutDevice().getReceiver());
+
+        for (int i=1; i<64; i++) {
+            ShortMessage message = new ShortMessage();
+            message.setMessage(ShortMessage.CONTROL_CHANGE, 0, i, 0);
+            receiver.send(message, -1);
+            message = new ShortMessage();
+            message.setMessage(ShortMessage.CONTROL_CHANGE, 1, i, 0);
+            receiver.send(message, -1);
+        }
     }
 
     @Override
@@ -78,7 +92,6 @@ public class NanoKontrol2 implements Control {
 
     @Override
     public void send(MidiMessage midiMessage, long l) {
-
         if (midiMessage instanceof ShortMessage) {
             handle((ShortMessage)midiMessage);
             return;
@@ -88,6 +101,10 @@ public class NanoKontrol2 implements Control {
 
     private void handle(ShortMessage msg) {
         int command = msg.getCommand();
+        System.err.println("Command: "+command);
+        System.err.println("Channel: "+msg.getChannel());
+        System.err.println("D1: "+msg.getData1());
+        System.err.println("D2: "+msg.getData2());
         switch (command){
             case ShortMessage.CONTROL_CHANGE:
                 handleControlChange(msg.getChannel(),msg.getData1(),msg.getData2());
@@ -168,10 +185,21 @@ public class NanoKontrol2 implements Control {
     }
 
     @Override
+    public void setReceiver(Receiver receiver) {
+        this.receiver = receiver;
+    }
+
+    @Override
+    public Receiver getReceiver() {
+        return receiver;
+    }
+
+    @Override
     public void close() {
         mixer.unhighlightFaderGroup(LANES);
         mixer.close();
-        device.close();
+        device.getInDevice().close();
+        device.getOutDevice().close();
     }
 
     public void setLogger(Logger logger) {

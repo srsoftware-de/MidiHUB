@@ -1,13 +1,14 @@
 package de.srsoftware.midihub.ui;
 
+import de.srsoftware.midihub.Device;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.sound.midi.*;
 import javax.swing.*;
-import java.util.Vector;
+import java.util.HashMap;
 
-public class DeviceList extends JList<MidiDevice.Info> {
+public class DeviceList extends JList<Device> {
 
     private static Logger LOG = LoggerFactory.getLogger(DeviceList.class);
     private LogList logger;
@@ -21,17 +22,34 @@ public class DeviceList extends JList<MidiDevice.Info> {
             @Override
             public void run() {
                 while (true) {
-                    Vector<MidiDevice.Info> receivers = new Vector<>();
+                    HashMap<String, Device> devices = new HashMap<>();
                     MidiDevice.Info[] infos = MidiSystem.getMidiDeviceInfo();
-                    for (MidiDevice.Info info : infos) try {
-                        LOG.info("Found {}, trying to obtain transmitter...", info);
-                        MidiSystem.getMidiDevice(info).getTransmitter();
-                        receivers.add(info);
-                        LOG.info("Transmitter aviailable.");
-                    } catch (MidiUnavailableException e) {
-                        LOG.info("No transmitter aviailable.");
+                    for (MidiDevice.Info info : infos){
+                        try {
+                            MidiDevice device = MidiSystem.getMidiDevice(info);
+                            String type = device.getClass().getSimpleName();
+                            String name = info.getName();
+                            LOG.info("Discovered {} \"{}\"",type,name);
+                            Device midiInfo = devices.get(name);
+                            switch (type){
+                                case "MidiOutDevice":
+                                    if (midiInfo == null) devices.put(name,midiInfo = new Device(name));
+                                    midiInfo.setOutDevice(device);
+                                    break;
+                                case "MidiInDevice":
+                                    if (midiInfo == null) devices.put(name,midiInfo = new Device(name));
+                                    midiInfo.setInDevice(device);
+                                    break;
+                                default:
+                                    LOG.info(" → unsupported");
+                            }
+                        } catch (MidiUnavailableException e) {
+                            e.printStackTrace();
+                        }
                     }
-                    setListData(receivers);
+
+                    LOG.info("Devices: {}",devices);
+                    setListData(devices.values().toArray(new Device[0]));
                     try {
                         Thread.sleep(10000);
                     } catch (InterruptedException e) {
