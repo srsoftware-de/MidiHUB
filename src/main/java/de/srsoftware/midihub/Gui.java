@@ -18,7 +18,7 @@ public class Gui extends JFrame {
     private static Logger LOG = LoggerFactory.getLogger(Gui.class);
     private static final String NANOKONTROL2 = "nanokontrol2";
     private final DeviceList deviceList;
-    private final HashMap<MidiDevice, Receiver> devices = new HashMap<>();
+    private final HashMap<MidiDevice, Control> devices = new HashMap<>();
     private final MixerPanel mixerPanel;
     private final LogList logList;
 
@@ -41,6 +41,15 @@ public class Gui extends JFrame {
         add(deviceList,BorderLayout.WEST);
 
         mixerPanel = new MixerPanel();
+        mixerPanel.setLogger(logList);
+        mixerPanel.onConnect(mixer -> {
+            if (!devices.isEmpty()) {
+                Control receiver = devices.values().iterator().next();
+                receiver.assign(mixer);
+
+            }
+        });
+
         add(mixerPanel,BorderLayout.NORTH);
 
         pack();
@@ -48,6 +57,7 @@ public class Gui extends JFrame {
         setVisible(true);
 
         deviceList.addListSelectionListener(valChanged -> monitorDevice(deviceList.getSelectedValue()));
+
     }
 
     private void monitorDevice(MidiDevice.Info deviceInfo) {

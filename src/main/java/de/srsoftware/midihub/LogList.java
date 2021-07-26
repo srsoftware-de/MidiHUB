@@ -32,7 +32,7 @@ public class LogList extends JList<String> implements Logger {
         }
         data.add(msg);
         while (data.size()>30) data.remove(0);
-        updateUI();
+        setListData(data);
     }
 
 }

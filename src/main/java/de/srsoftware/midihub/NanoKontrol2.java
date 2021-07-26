@@ -1,11 +1,17 @@
 package de.srsoftware.midihub;
 
 
+import com.illposed.osc.OSCMessage;
+import com.illposed.osc.OSCSerializeException;
+import com.illposed.osc.transport.udp.OSCPortOut;
+
 import javax.sound.midi.*;
-import java.util.HashSet;
+import java.io.IOException;
+import java.net.InetAddress;
+import java.util.Vector;
 
-public class NanoKontrol2 implements Receiver {
-
+public class NanoKontrol2 implements Control {
+    private static final int LANES = 8;
     private static final int FADER1 = 0;
     private static final int FADER2 = 1;
     private static final int FADER3 = 2;
@@ -60,6 +66,7 @@ public class NanoKontrol2 implements Receiver {
 
     private final MidiDevice device;
     private Logger logger;
+    private Mixer mixer;
 
     public NanoKontrol2(MidiDevice device) throws MidiUnavailableException {
         this.device = device;
@@ -68,13 +75,19 @@ public class NanoKontrol2 implements Receiver {
     }
 
     @Override
+    public void assign(Mixer mixer) {
+        this.mixer = mixer;
+        mixer.highlight(LANES);
+    }
+
+    @Override
     public void send(MidiMessage midiMessage, long l) {
-        logger.log("Message received: {} ({})",midiMessage,midiMessage.getClass().getSimpleName());
 
         if (midiMessage instanceof ShortMessage) {
             handle((ShortMessage)midiMessage);
             return;
         }
+        logger.log("Message received: {} ({})",midiMessage,midiMessage.getClass().getSimpleName());
     }
 
     private void handle(ShortMessage msg) {
@@ -86,6 +99,7 @@ public class NanoKontrol2 implements Receiver {
     }
 
     private void handleControlChange(int channel, int data1, int data2) {
+        if (mixer != null)
         switch (data1) {
             case FADER1:
             case FADER2:
@@ -95,7 +109,7 @@ public class NanoKontrol2 implements Receiver {
             case FADER6:
             case FADER7:
             case FADER8:
-                handleFader(data1-FADER1+1,data2);
+                mixer.handleFader(data1-FADER1+1,100*data2/127f);
                 break;
             case POTI1:
             case POTI2:
@@ -105,7 +119,7 @@ public class NanoKontrol2 implements Receiver {
             case POTI6:
             case POTI7:
             case POTI8:
-                handlePoti(data1-POTI1+1,data2);
+                mixer.handlePoti(data1-POTI1+1,100*data2/127f);
                 break;
             case MUTE1:
             case MUTE2:
@@ -115,7 +129,7 @@ public class NanoKontrol2 implements Receiver {
             case MUTE6:
             case MUTE7:
             case MUTE8:
-                handleMute(data1-MUTE1+1,data2>0);
+                mixer.handleMute(data1-MUTE1+1,data2>0);
                 break;
             case RECORD1:
             case RECORD2:
@@ -125,7 +139,7 @@ public class NanoKontrol2 implements Receiver {
             case RECORD6:
             case RECORD7:
             case RECORD8:
-                handleRec(data1-RECORD1+1,data2>0);
+                mixer.handleRec(data1-RECORD1+1,data2>0);
                 break;
             case SOLO1:
             case SOLO2:
@@ -135,54 +149,29 @@ public class NanoKontrol2 implements Receiver {
             case SOLO6:
             case SOLO7:
             case SOLO8:
-                handleSolo(data1-SOLO1+1,data2>0);
+                mixer.handleSolo(data1-SOLO1+1,data2>0);
                 break;
             case TRACK_L:
-                changeTrack(-1);
+                mixer.changeTrack(-LANES);
                 break;
             case TRACK_R:
-                changeTrack(+1);
+                mixer.changeTrack(+LANES);
                 break;
             case MARKER_L:
-                changeMarker(-1);
+                mixer.changeMarker(-1);
                 break;
             case MARKER_R:
-                changeMarker(+1);
+                mixer.changeMarker(+1);
                 break;
             default:
                 logger.log("ControlChange @ channel {}: {} / {}",channel,data1,data2);
         }
     }
 
-    private void changeMarker(int delta) {
-        logger.log("{} marker",delta > 0 ? "increasing":"decreasing");
-    }
-    private void changeTrack(int delta) {
-        logger.log("{} track",delta > 0 ? "increasing":"decreasing");
-    }
-
-    private void handleRec(int num, boolean b) {
-        logger.log("Record {} → {}",num,b ? "on" : "off");
-    }
-
-    private void handleSolo(int num, boolean b) {
-        logger.log("Solo {} → {}",num,b ? "on" : "off");
-    }
-
-    private void handleMute(int num, boolean b) {
-        logger.log("Mute {} → {}",num,b ? "on" : "off");
-    }
-
-    private void handlePoti(int num, int level) {
-        logger.log("Poti {} → {}",num,level);
-    }
-
-    private void handleFader(int num, int level) {
-        logger.log("Fader {} → {}",num,level);
-    }
-
     @Override
     public void close() {
+        mixer.unhighlight(LANES);
+        mixer.close();
         device.close();
     }
 
