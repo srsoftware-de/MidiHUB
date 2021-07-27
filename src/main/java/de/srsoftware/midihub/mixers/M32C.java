@@ -19,6 +19,7 @@ public class M32C implements Mixer {
     private final OSCPortOut sink;
     private final OSCPortIn source;
     private de.srsoftware.midihub.ui.Logger logger;
+    private static final float TRAP = 0.03f;
 
     private static final int MAIN = 0;
 
@@ -38,7 +39,7 @@ public class M32C implements Mixer {
     }
 
     @Override
-    public boolean getMute(int num) {
+    public synchronized boolean getMute(int num) {
         try {
             num+=offset;
             String channel = (num < 10 ? "0" : "") + num;
@@ -60,7 +61,7 @@ public class M32C implements Mixer {
     }
 
     @Override
-    public boolean getSolo(int num) {
+    public synchronized boolean getSolo(int num) {
         try {
             num+=offset;
             String channel = (num < 10 ? "0" : "") + num;
@@ -249,7 +250,7 @@ public class M32C implements Mixer {
             float new_val = percent / 100;
             float old_val = getPano(num);
 
-            if (Math.abs(new_val - old_val)>0.02) return;
+            if (Math.abs(new_val - old_val)>TRAP) return;
 
             String channel = (num < 10 ? "0" : "") + num;
 
@@ -266,7 +267,7 @@ public class M32C implements Mixer {
         }
     }
 
-    private float getPano(int num) {
+    private synchronized float getPano(int num) {
         try {
             String channel = (num < 10 ? "0" : "") + num;
             String mixbus = (bus < 10 ? "0" : "") + bus;
@@ -300,7 +301,7 @@ public class M32C implements Mixer {
             float new_val = percent / 100;
             float old_val = getGain(num);
 
-            if (Math.abs(new_val - old_val)>0.02) return;
+            if (Math.abs(new_val - old_val)>TRAP) return;
 
             String channel = (num < 10 ? "0" : "") + num;
 
@@ -317,7 +318,7 @@ public class M32C implements Mixer {
         }
     }
 
-    private float getGain(int num) {
+    private synchronized float getGain(int num) {
         try {
             String channel = (num < 10 ? "0" : "") + num;
             String mixbus = (bus < 10 ? "0" : "") + bus;
@@ -351,7 +352,7 @@ public class M32C implements Mixer {
         float new_val = percent / 100;
         float old_val = getFader(bus,num);
 
-        if (Math.abs(new_val - old_val)>0.02) return;
+        if (Math.abs(new_val - old_val)>TRAP) return;
 
         String channel = (num < 10 ? "0" : "") + num;
         String mixbus = (bus < 10 ? "0" : "") + bus;
@@ -369,7 +370,7 @@ public class M32C implements Mixer {
         }
     }
 
-    private float getFader(int bus, int num) {
+    private synchronized float getFader(int bus, int num) {
         try {
             String channel = (num < 10 ? "0" : "") + num;
             String mixbus = (bus < 10 ? "0" : "") + bus;

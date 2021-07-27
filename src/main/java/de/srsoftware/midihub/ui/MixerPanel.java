@@ -18,7 +18,7 @@ public class MixerPanel extends JPanel {
     }
 
     public interface Listener{
-        public void onConnect(Mixer mixer);
+        void onConnect(Mixer mixer);
     }
 
     MixerPanel() {
@@ -33,6 +33,10 @@ public class MixerPanel extends JPanel {
         add(btn,BorderLayout.EAST);
 
         btn.addActionListener(action -> tryConnect());
+
+        // TODO: Suche nach Mixern implementieren.
+        // Dazu UDP-Message /xinfo an Broadcast-Adresse 255.255.255.255 : port (10023) senden
+        // Mixer sollte mit UDP-Message /xinfo + ip + name + ? + version antworten
     }
 
     private void tryConnect() {
