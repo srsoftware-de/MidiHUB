@@ -44,7 +44,7 @@ public class MixerPanel extends JPanel {
             mixer = new M32C(host,port,logger);
             if (listener != null) listener.onConnect(mixer);
         } catch (Exception e){
-
+            e.printStackTrace();
         }
     }
 

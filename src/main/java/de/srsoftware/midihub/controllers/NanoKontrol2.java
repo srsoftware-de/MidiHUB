@@ -7,7 +7,6 @@ import de.srsoftware.midihub.mixers.Mixer;
 import org.slf4j.LoggerFactory;
 
 import javax.sound.midi.*;
-import java.util.List;
 
 public class NanoKontrol2 implements Control, Transmitter {
     private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(NanoKontrol2.class);
@@ -63,6 +62,7 @@ public class NanoKontrol2 implements Control, Transmitter {
     private static final int STOP = 42;
     private static final int PLAY = 41;
     private static final int REC = 45;
+    private static final int STOP_BTN = 42;
 
     private final Device device;
     private Logger logger;
@@ -165,9 +165,11 @@ public class NanoKontrol2 implements Control, Transmitter {
                 break;
             case TRACK_L:
                 mixer.changeTrack(-LANES);
+                getChannelButtons();
                 break;
             case TRACK_R:
                 mixer.changeTrack(+LANES);
+                getChannelButtons();
                 break;
             case MARKER_L:
                 mixer.changeMarker(-1);
@@ -175,9 +177,17 @@ public class NanoKontrol2 implements Control, Transmitter {
             case MARKER_R:
                 mixer.changeMarker(+1);
                 break;
+            case STOP_BTN:
+                mixer.stop(data2);
+                break;
             default:
                 logger.log("ControlChange @ channel {}: {} / {}",channel,data1,data2);
         }
+    }
+
+    private void getChannelButtons() {
+        for (int i = 1; i<=8; i++) setLed(MUTE1+i-1,mixer.getMute(i));
+        for (int i = 1; i<=8; i++) setLed(SOLO1+i-1,mixer.getSolo(i));
     }
 
     @Override

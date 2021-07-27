@@ -28,4 +28,10 @@ public interface Mixer {
 
     void highlightBus(int bus);
     void unhighlightBus(int bus);
+
+    void stop(int val);
+
+    boolean getMute(int num);
+
+    boolean getSolo(int i);
 }

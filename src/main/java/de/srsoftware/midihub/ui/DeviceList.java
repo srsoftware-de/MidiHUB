@@ -29,7 +29,7 @@ public class DeviceList extends JList<Device> {
                             MidiDevice device = MidiSystem.getMidiDevice(info);
                             String type = device.getClass().getSimpleName();
                             String name = info.getName();
-                            LOG.info("Discovered {} \"{}\"",type,name);
+                            LOG.debug("Discovered {} \"{}\"",type,name);
                             Device midiInfo = devices.get(name);
                             switch (type){
                                 case "MidiOutDevice":
@@ -41,17 +41,17 @@ public class DeviceList extends JList<Device> {
                                     midiInfo.setInDevice(device);
                                     break;
                                 default:
-                                    LOG.info(" → unsupported");
+                                    LOG.debug(" → unsupported");
                             }
                         } catch (MidiUnavailableException e) {
                             e.printStackTrace();
                         }
                     }
 
-                    LOG.info("Devices: {}",devices);
+                    LOG.debug("Devices: {}",devices);
                     setListData(devices.values().toArray(new Device[0]));
                     try {
-                        Thread.sleep(10000);
+                        Thread.sleep(2000);
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
