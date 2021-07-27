@@ -62,7 +62,6 @@ public class NanoKontrol2 implements Control, Transmitter {
     private static final int STOP = 42;
     private static final int PLAY = 41;
     private static final int REC = 45;
-    private static final int STOP_BTN = 42;
 
     private final Device device;
     private Logger logger;
@@ -150,7 +149,7 @@ public class NanoKontrol2 implements Control, Transmitter {
             case RECORD7:
             case RECORD8:
                 enabled = mixer.handleRec(data1-RECORD1+1,data2>0);
-                setLed(data1,enabled);
+                //setLed(data1,enabled);
                 break;
             case SOLO1:
             case SOLO2:
@@ -177,9 +176,11 @@ public class NanoKontrol2 implements Control, Transmitter {
             case MARKER_R:
                 mixer.changeMarker(+1);
                 break;
-            case STOP_BTN:
+            case STOP:
                 mixer.stop(data2);
                 break;
+            case SET:
+                mixer.handleSet();
             default:
                 logger.log("ControlChange @ channel {}: {} / {}",channel,data1,data2);
         }

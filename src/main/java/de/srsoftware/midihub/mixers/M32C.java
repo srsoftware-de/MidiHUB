@@ -151,7 +151,7 @@ public class M32C implements Mixer {
                 lastChannel = 0;
                 String channel = (i < 10 ? "0" : "") + i;
                 Vector<Integer> args = new Vector<>();
-                args.add(9);
+                args.add(1);
                 OSCMessage message = new OSCMessage("/ch/"+channel+"/config/color", args);
                 sink.send(message);
                 logger.log("OSC.send: {} {}",message.getAddress(),9);
@@ -200,8 +200,12 @@ public class M32C implements Mixer {
 
     @Override
     public boolean handleRec(int num, boolean enabled) {
+        return false;
+    }
 
-        return enabled;
+    @Override
+    public void handleSet() {
+        changeMarker(-bus);
     }
 
     @Override
@@ -390,7 +394,7 @@ public class M32C implements Mixer {
     public void highlightChannel(int num) {
         try {
             Vector<Object> args = new Vector<>();
-            args.add(1);
+            args.add(9);
             String channel = (num < 10 ? "0" : "") + num;
             OSCMessage message = new OSCMessage("/ch/"+channel+"/config/color", args);
             sink.send(message);
@@ -405,7 +409,7 @@ public class M32C implements Mixer {
     public void unhighlightChannel(int num) {
         try {
             Vector<Object> args = new Vector<>();
-            args.add(9);
+            args.add(1);
             String channel = (num < 10 ? "0" : "") + num;
             OSCMessage message = new OSCMessage("/ch/"+channel+"/config/color", args);
             sink.send(message);

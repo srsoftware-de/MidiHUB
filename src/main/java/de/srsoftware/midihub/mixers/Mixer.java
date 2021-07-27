@@ -34,4 +34,6 @@ public interface Mixer {
     boolean getMute(int num);
 
     boolean getSolo(int i);
+
+    void handleSet();
 }
