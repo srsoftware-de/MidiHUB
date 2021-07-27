@@ -68,7 +68,7 @@ public class NanoKontrol2 implements Control, Transmitter {
     private Mixer mixer;
     private Receiver receiver;
 
-    public NanoKontrol2(Device device) throws MidiUnavailableException, InvalidMidiDataException {
+    public NanoKontrol2(Device device) throws MidiUnavailableException {
         this.device = device;
         device.getInDevice().open();
         device.getInDevice().getTransmitter().setReceiver(this);
@@ -85,13 +85,23 @@ public class NanoKontrol2 implements Control, Transmitter {
     }
 
     @Override
-    public void send(MidiMessage midiMessage, long l) {
-        if (midiMessage instanceof ShortMessage) {
-            handle((ShortMessage)midiMessage);
-            return;
-        }
-        logger.log("Message received: {} ({})",midiMessage,midiMessage.getClass().getSimpleName());
+    public void close() {
+        mixer.unhighlightFaderGroup(LANES);
+        mixer.close();
+        device.getInDevice().close();
+        device.getOutDevice().close();
     }
+
+    private void getChannelButtons() {
+        for (int i = 1; i<=8; i++) setLed(MUTE1+i-1,mixer.getMute(i));
+        for (int i = 1; i<=8; i++) setLed(SOLO1+i-1,mixer.getSolo(i));
+    }
+
+    @Override
+    public Receiver getReceiver() {
+        return receiver;
+    }
+
 
     private void handle(ShortMessage msg) {
         int command = msg.getCommand();
@@ -148,8 +158,7 @@ public class NanoKontrol2 implements Control, Transmitter {
             case RECORD6:
             case RECORD7:
             case RECORD8:
-                enabled = mixer.handleRec(data1-RECORD1+1,data2>0);
-                //setLed(data1,enabled);
+                mixer.handleRec(data1-RECORD1+1,data2>0);
                 break;
             case SOLO1:
             case SOLO2:
@@ -186,31 +195,15 @@ public class NanoKontrol2 implements Control, Transmitter {
         }
     }
 
-    private void getChannelButtons() {
-        for (int i = 1; i<=8; i++) setLed(MUTE1+i-1,mixer.getMute(i));
-        for (int i = 1; i<=8; i++) setLed(SOLO1+i-1,mixer.getSolo(i));
-    }
+
 
     @Override
-    public void setReceiver(Receiver receiver) {
-        this.receiver = receiver;
-    }
-
-    @Override
-    public Receiver getReceiver() {
-        return receiver;
-    }
-
-    @Override
-    public void close() {
-        mixer.unhighlightFaderGroup(LANES);
-        mixer.close();
-        device.getInDevice().close();
-        device.getOutDevice().close();
-    }
-
-    public void setLogger(Logger logger) {
-        this.logger = logger;
+    public void send(MidiMessage midiMessage, long l) {
+        if (midiMessage instanceof ShortMessage) {
+            handle((ShortMessage)midiMessage);
+            return;
+        }
+        logger.log("Message received: {} ({})",midiMessage,midiMessage.getClass().getSimpleName());
     }
 
     public void setLed(int led,boolean enable){
@@ -221,5 +214,15 @@ public class NanoKontrol2 implements Control, Transmitter {
         } catch (InvalidMidiDataException e) {
             e.printStackTrace();
         }
+    }
+
+    public void setLogger(Logger logger) {
+        this.logger = logger;
+    }
+
+
+    @Override
+    public void setReceiver(Receiver receiver) {
+        this.receiver = receiver;
     }
 }

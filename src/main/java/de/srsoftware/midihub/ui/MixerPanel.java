@@ -39,6 +39,10 @@ public class MixerPanel extends JPanel {
         // Mixer sollte mit UDP-Message /xinfo + ip + name + ? + version antworten
     }
 
+    public void onConnect(Listener listener){
+        this.listener = listener;
+    }
+
     private void tryConnect() {
         try {
             String host = address.getText();
@@ -52,7 +56,4 @@ public class MixerPanel extends JPanel {
         }
     }
 
-    public void onConnect(Listener listener){
-        this.listener = listener;
-    }
 }
