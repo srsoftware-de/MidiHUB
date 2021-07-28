@@ -1,6 +1,8 @@
 package de.srsoftware.midihub;
 
 import com.illposed.osc.OSCMessage;
+import de.srsoftware.midihub.mixers.Mixer;
+import de.srsoftware.midihub.threads.MixerExplorer;
 
 import java.util.List;
 
@@ -27,5 +29,9 @@ public class MixerInfo implements Comparable<MixerInfo> {
     @Override
     public String toString() {
         return model+" / "+address;
+    }
+
+    public Mixer getMixer() {
+        return null; // TODO
     }
 }

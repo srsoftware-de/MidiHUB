@@ -80,6 +80,7 @@ public class NanoKontrol2 implements Control, Transmitter {
 
     @Override
     public void assign(Mixer mixer) {
+        if (mixer == null) return;
         this.mixer = mixer;
         mixer.highlightFaderGroup(LANES);
     }
@@ -116,7 +117,10 @@ public class NanoKontrol2 implements Control, Transmitter {
     }
 
     private void handleControlChange(int channel, int data1, int data2) {
-        if (mixer == null) return;
+        if (mixer == null) {
+            logger.log("received control change {}/{} on channel, but no device is assigned!",data1,data2,channel);
+            return;
+        }
         boolean enabled;
         switch (data1) {
             case FADER1:

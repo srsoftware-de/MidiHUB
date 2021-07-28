@@ -32,13 +32,8 @@ public class DeviceExplorer {
         new Thread(){
             @Override
             public void run() {
-                Vector<Device> newDevices = new Vector<>();
                 while (true) {
-                    try {
-                        Thread.sleep(2000);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
+                    Vector<Device> newDevices = new Vector<>();
                     MidiDevice.Info[] infos = MidiSystem.getMidiDeviceInfo();
                     for (MidiDevice.Info info : infos){
                         try {
@@ -69,9 +64,13 @@ public class DeviceExplorer {
                             e.printStackTrace();
                         }
                     }
-
                     if (!newDevices.isEmpty()) listeners.forEach(listener -> listener.devicesDiscovered(newDevices));
 
+                    try {
+                        Thread.sleep(2000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
                 }
             }
         }.start();

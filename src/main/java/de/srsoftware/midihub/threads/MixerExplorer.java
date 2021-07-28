@@ -1,43 +1,73 @@
-package de.srsoftware.midihub.ui;
+package de.srsoftware.midihub.threads;
 
 import com.illposed.osc.*;
 import com.illposed.osc.messageselector.OSCPatternAddressMessageSelector;
 import com.illposed.osc.transport.udp.OSCPortIn;
 import com.illposed.osc.transport.udp.OSCPortOut;
+import de.srsoftware.midihub.Device;
 import de.srsoftware.midihub.MixerInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.swing.*;
-import java.awt.*;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.*;
-import java.util.List;
 
-public class MixerList extends JList<MixerInfo> implements OSCMessageListener {
+public class MixerExplorer implements OSCMessageListener {
     private static final String ADDRESS = "/xinfo";
     private static final String BROADCAST = "255.255.255.255";
-    private static final Logger LOG = LoggerFactory.getLogger(MixerList.class);
+    private static final Logger LOG = LoggerFactory.getLogger(MixerExplorer.class);
     private static final int PORT_LOCAL = 10020;
     private static final InetSocketAddress SOCK_LOCAL = new InetSocketAddress(PORT_LOCAL);
 
-    private LogList logger;
-    private Set<MixerInfo> mixers = new TreeSet<>();
+    public static final MixerExplorer singleton = new MixerExplorer();
 
-    public MixerList() throws IOException {
-        setPreferredSize(new Dimension(300,600));
-        OSCPortIn source = new OSCPortIn(SOCK_LOCAL);
-        OSCPatternAddressMessageSelector selector = new OSCPatternAddressMessageSelector(ADDRESS);
-        source.getDispatcher().addListener(selector, this);
-        source.startListening();
-        startAutoDiscovery();
+    private Set<MixerInfo> mixers = new TreeSet<>();
+    private Set<Listener> listeners = new HashSet<>();
+
+    public static MixerInfo[] mixerList() {
+        return singleton.mixers.toArray(MixerInfo[]::new);
+    }
+
+
+    @Override
+    public void acceptMessage(OSCMessageEvent event) {
+        OSCMessage message = event.getMessage();
+        int oldSize = mixers.size();
+        MixerInfo mx = new MixerInfo(message);
+        if (!mixers.contains(mx)){
+            LOG.debug("new Mixer: mx");
+            mixers.add(mx);
+            if (mixers.size() != oldSize) listeners.forEach(l -> l.mixerDiscovered(mx));
+        }
+    }
+
+    public static void addListener(Listener listener) {
+        singleton.listeners.add(listener);
+    }
+
+    public interface Listener{
+        void mixerDiscovered(MixerInfo mixer);
+    }
+
+    private MixerExplorer() {
+        try {
+            OSCPortIn source = new OSCPortIn(SOCK_LOCAL);
+            OSCPatternAddressMessageSelector selector = new OSCPatternAddressMessageSelector(ADDRESS);
+            source.getDispatcher().addListener(selector, this);
+            source.startListening();
+            startAutoDiscovery();
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.exit(-1);
+        }
     }
 
     private void startAutoDiscovery() {
         new Thread(){
             @Override
             public void run() {
+
                 OSCMessage message = new OSCMessage(ADDRESS, List.of());
                 while (true) {
                     for (int port : List.of(10023,10024)) try {
@@ -49,24 +79,13 @@ public class MixerList extends JList<MixerInfo> implements OSCMessageListener {
                         e.printStackTrace();
                     }
 
-
                     try {
                         Thread.sleep(10000);
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
-
                 }
             }
         }.start();
     }
-
-    @Override
-    public void acceptMessage(OSCMessageEvent event) {
-        OSCMessage message = event.getMessage();
-        int oldSize = mixers.size();
-        mixers.add(new MixerInfo(message));
-        if (mixers.size() != oldSize) setListData(new Vector<>(mixers));
-    }
-
 }
