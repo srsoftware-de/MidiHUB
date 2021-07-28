@@ -1,5 +1,6 @@
 package de.srsoftware.midihub.ui;
 
+import de.srsoftware.midihub.AssignmentTableModel;
 import de.srsoftware.midihub.Device;
 import de.srsoftware.midihub.controllers.Control;
 import de.srsoftware.midihub.controllers.NanoKontrol2;
@@ -14,7 +15,6 @@ import java.util.*;
 public class Gui extends JFrame {
     private static Logger LOG = LoggerFactory.getLogger(Gui.class);
     private static final String NANOKONTROL2 = "nanoKONTROL2";
-    private final DeviceList deviceList;
     private final HashMap<Device, Control> devices = new HashMap<>();
     private final MixerList mixerPanel;
     private final LogList logList;
@@ -31,20 +31,21 @@ public class Gui extends JFrame {
         JScrollPane logScroll = new JScrollPane();
         logScroll.setPreferredSize(new Dimension(600,600));
         logScroll.add(logList);
-        add(logScroll,BorderLayout.CENTER);
-
-        deviceList = new DeviceList();
-        add(deviceList,BorderLayout.WEST);
+        add(logScroll,BorderLayout.SOUTH);
 
         mixerPanel = new MixerList();
         add(mixerPanel,BorderLayout.EAST);
+
+        AssignmentTableModel model = new AssignmentTableModel();
+        JTable table = new JTable(model);
+        table.setPreferredSize(new Dimension(1200,600));
+        add(table,BorderLayout.CENTER);
 
         pack();
         setLocationRelativeTo(null);
         setVisible(true);
 
-        deviceList.addListSelectionListener(valChanged -> monitorDevice(deviceList.getSelectedValue()));
-
+        //deviceList.addListSelectionListener(valChanged -> monitorDevice(deviceList.getSelectedValue()));
     }
 
     private void monitorDevice(Device midiInfo) {
