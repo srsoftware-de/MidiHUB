@@ -32,7 +32,6 @@ public class MixerList extends JList<MixerInfo> implements OSCMessageListener {
         source.getDispatcher().addListener(selector, this);
         source.startListening();
         startAutoDiscovery();
-        System.err.println("Listening for packs");
     }
 
     private void startAutoDiscovery() {
@@ -65,8 +64,9 @@ public class MixerList extends JList<MixerInfo> implements OSCMessageListener {
     @Override
     public void acceptMessage(OSCMessageEvent event) {
         OSCMessage message = event.getMessage();
+        int oldSize = mixers.size();
         mixers.add(new MixerInfo(message));
-        setListData(new Vector<>(mixers));
+        if (mixers.size() != oldSize) setListData(new Vector<>(mixers));
     }
 
 }
