@@ -10,7 +10,7 @@ import java.io.IOException;
 public class App {
     private static Logger LOG = LoggerFactory.getLogger(App.class);
 
-    public static void main(String[] args) throws InvalidMidiDataException, InterruptedException, IOException {
+    public static void main(String[] args) {
         Gui gui = new Gui();
         gui.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
     }

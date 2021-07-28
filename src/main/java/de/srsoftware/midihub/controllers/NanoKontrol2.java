@@ -2,7 +2,7 @@ package de.srsoftware.midihub.controllers;
 
 
 import de.srsoftware.midihub.Device;
-import de.srsoftware.midihub.ui.Logger;
+import de.srsoftware.midihub.ui.LogList;
 import de.srsoftware.midihub.mixers.Mixer;
 import org.slf4j.LoggerFactory;
 
@@ -64,7 +64,6 @@ public class NanoKontrol2 implements Control, Transmitter {
     private static final int REC = 45;
 
     private final Device device;
-    private Logger logger;
     private Mixer mixer;
     private Receiver receiver;
 
@@ -79,10 +78,11 @@ public class NanoKontrol2 implements Control, Transmitter {
     }
 
     @Override
-    public void assign(Mixer mixer) {
-        if (mixer == null) return;
+    public boolean assign(Mixer mixer) {
+        if (mixer == null) return false;
         this.mixer = mixer;
         mixer.highlightFaderGroup(LANES);
+        return true;
     }
 
     @Override
@@ -111,14 +111,14 @@ public class NanoKontrol2 implements Control, Transmitter {
                 handleControlChange(msg.getChannel(),msg.getData1(),msg.getData2());
                 break;
             default:
-                logger.log("Unexpected command type: {}",command);
+                LogList.add("Unexpected command type: {}",command);
                 LOG.info("Command: {}, channel {}, data 1: {}, data 2: {}",command,msg.getChannel(),msg.getData1(),msg.getData2());
         }
     }
 
     private void handleControlChange(int channel, int data1, int data2) {
         if (mixer == null) {
-            logger.log("received control change {}/{} on channel, but no device is assigned!",data1,data2,channel);
+            LogList.add("received control change {}/{} on channel, but no device is assigned!",data1,data2,channel);
             return;
         }
         boolean enabled;
@@ -194,8 +194,12 @@ public class NanoKontrol2 implements Control, Transmitter {
                 break;
             case SET:
                 mixer.handleSet();
+                break;
+            case CYCLE:
+                mixer.handleCycle();
+                break;
             default:
-                logger.log("ControlChange @ channel {}: {} / {}",channel,data1,data2);
+                LogList.add("ControlChange @ channel {}: {} / {}",channel,data1,data2);
         }
     }
 
@@ -207,7 +211,7 @@ public class NanoKontrol2 implements Control, Transmitter {
             handle((ShortMessage)midiMessage);
             return;
         }
-        logger.log("Message received: {} ({})",midiMessage,midiMessage.getClass().getSimpleName());
+        LogList.add("Message received: {} ({})",midiMessage,midiMessage.getClass().getSimpleName());
     }
 
     public void setLed(int led,boolean enable){
@@ -219,11 +223,6 @@ public class NanoKontrol2 implements Control, Transmitter {
             e.printStackTrace();
         }
     }
-
-    public void setLogger(Logger logger) {
-        this.logger = logger;
-    }
-
 
     @Override
     public void setReceiver(Receiver receiver) {

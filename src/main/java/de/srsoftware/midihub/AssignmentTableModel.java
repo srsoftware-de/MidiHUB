@@ -6,9 +6,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.table.DefaultTableModel;
+import java.util.HashMap;
 
 public class AssignmentTableModel extends DefaultTableModel {
     private static Logger LOG = LoggerFactory.getLogger(AssignmentTableModel.class);
+
+    private HashMap<Integer,HashMap<Integer,String>> values = new HashMap<>();
+
     public AssignmentTableModel(){
         DeviceExplorer.addListener(newDevices -> update());
         MixerExplorer.addListener(mixerDiscovered -> update());
@@ -33,7 +37,11 @@ public class AssignmentTableModel extends DefaultTableModel {
         if (col == 0){
             return MixerExplorer.mixerList()[row-1].toString();
         }
-        return "col "+col+", row "+row;
+        HashMap<Integer, String> map = values.get(row);
+        if (map == null) return "+";
+        String val = map.get(col);
+        if (val == null) return "+";
+        return val;
     }
 
     public void update(){
@@ -47,5 +55,13 @@ public class AssignmentTableModel extends DefaultTableModel {
 
     public Device getController(int i) {
         return DeviceExplorer.deviceList()[i];
+    }
+
+    @Override
+    public void setValueAt(Object aValue, int row, int column) {
+        HashMap<Integer, String> map = values.get(row);
+        if (map == null) values.put(row,map = new HashMap<>());
+        map.put(column, aValue.toString());
+        fireTableCellUpdated(row,column);
     }
 }

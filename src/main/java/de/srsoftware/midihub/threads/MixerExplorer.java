@@ -2,15 +2,21 @@ package de.srsoftware.midihub.threads;
 
 import com.illposed.osc.*;
 import com.illposed.osc.messageselector.OSCPatternAddressMessageSelector;
+import com.illposed.osc.transport.udp.OSCPort;
 import com.illposed.osc.transport.udp.OSCPortIn;
 import com.illposed.osc.transport.udp.OSCPortOut;
 import de.srsoftware.midihub.Device;
 import de.srsoftware.midihub.MixerInfo;
+import de.srsoftware.midihub.ui.LogList;
+import de.srsoftware.tools.Tools;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.net.InetSocketAddress;
+import java.net.SocketAddress;
+import java.nio.channels.DatagramChannel;
 import java.util.*;
 
 public class MixerExplorer implements OSCMessageListener {
@@ -34,11 +40,16 @@ public class MixerExplorer implements OSCMessageListener {
     public void acceptMessage(OSCMessageEvent event) {
         OSCMessage message = event.getMessage();
         int oldSize = mixers.size();
-        MixerInfo mx = new MixerInfo(message);
-        if (!mixers.contains(mx)){
-            LOG.debug("new Mixer: mx");
-            mixers.add(mx);
-            if (mixers.size() != oldSize) listeners.forEach(l -> l.mixerDiscovered(mx));
+        Object source = event.getSource();
+        Integer port = Tools.unwrap(Tools.unwrap(source,"channel"),"cachedSenderPort");
+
+        if (port != null) {
+            MixerInfo mx = new MixerInfo(message,port);
+            if (!mixers.contains(mx)){
+                LOG.debug("new Mixer: mx");
+                mixers.add(mx);
+                if (mixers.size() != oldSize) listeners.forEach(l -> l.mixerDiscovered(mx));
+            }
         }
     }
 

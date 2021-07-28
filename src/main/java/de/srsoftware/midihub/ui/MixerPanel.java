@@ -11,11 +11,6 @@ public class MixerPanel extends JPanel {
     private final JTextField address;
     private Mixer mixer;
     private Listener listener;
-    private Logger logger;
-
-    public void setLogger(Logger logger) {
-        this.logger = logger;
-    }
 
     public interface Listener{
         void onConnect(Mixer mixer);
@@ -49,7 +44,7 @@ public class MixerPanel extends JPanel {
             int port = Integer.parseInt(this.port.getText());
             if (mixer != null) mixer.disconnect();
             mixer = null;
-            mixer = new M32C(host,port,logger);
+            mixer = new M32C(host,port);
             if (listener != null) listener.onConnect(mixer);
         } catch (Exception e){
             e.printStackTrace();

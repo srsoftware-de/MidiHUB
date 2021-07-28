@@ -1,6 +1,7 @@
 package de.srsoftware.midihub.mixers;
 
 import com.illposed.osc.*;
+import com.illposed.osc.messageselector.OSCPatternAddressMessageSelector;
 import com.illposed.osc.transport.udp.OSCPortIn;
 import com.illposed.osc.transport.udp.OSCPortOut;
 import de.srsoftware.midihub.WatchDog;
@@ -14,9 +15,12 @@ import java.net.SocketAddress;
 import java.util.List;
 import java.util.Vector;
 
-public class M32C extends XSeries {
-    public M32C(String host, int port) throws IOException {
-        super(host, port, 16, 32);
+public class XR18 extends XSeries{
+
+    public static final String MODEL = "XR18";
+
+    public XR18(String host, int port) throws IOException {
+        super(host, port, 8, 16);
     }
 
     @Override

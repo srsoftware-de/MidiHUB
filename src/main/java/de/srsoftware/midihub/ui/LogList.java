@@ -1,20 +1,24 @@
 package de.srsoftware.midihub.ui;
 
 import javax.swing.*;
-import java.util.Vector;
+import java.awt.*;
 
-public class LogList extends JList<String> implements Logger {
-
-    private final Vector<String> data = new Vector<>();
+public class LogList extends JList<String> {
+    private static LogList singleton;
+    private static final int DEFAULT_MAX_LENGTH = 2048;
+    private static int maxLength = DEFAULT_MAX_LENGTH;
 
     public LogList(){
-        data.add("Test");
-        data.add("Test2");
-        setListData(data);
-        ensureIndexIsVisible(50);
+        super(new DefaultListModel<String>());
+        setSize(new Dimension(1200,600));
     }
 
-    public void log(String msg, Object... fills) {
+    public static LogList get() {
+        if (singleton == null) singleton = new LogList();
+        return singleton;
+    }
+
+    public static void add(String msg, Object... fills){
         for (Object f:fills){
             int pos = msg.indexOf("{}");
             if (pos < 0) {
@@ -22,9 +26,13 @@ public class LogList extends JList<String> implements Logger {
             }
             msg = msg.substring(0,pos)+f+msg.substring(pos+2);
         }
-        data.add(msg);
-        while (data.size()>30) data.remove(0);
-        setListData(data);
+        DefaultListModel<String> model = ((DefaultListModel<String>) get().getModel());
+        while (model.size() > maxLength) model.remove(0);
+        model.addElement(msg);
+        get().ensureIndexIsVisible(model.size()-1);
     }
 
+    public static void setMaxLength(int maxLength) {
+        LogList.maxLength = maxLength;
+    }
 }
