@@ -6,6 +6,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.sound.midi.*;
 import javax.swing.*;
+import java.awt.*;
 import java.util.HashMap;
 
 public class DeviceList extends JList<Device> {
@@ -14,6 +15,7 @@ public class DeviceList extends JList<Device> {
     private LogList logger;
 
     public DeviceList(){
+        setPreferredSize(new Dimension(300,600));
         thread().start();
     }
 
@@ -48,7 +50,7 @@ public class DeviceList extends JList<Device> {
                         }
                     }
 
-                    LOG.debug("Devices: {}",devices);
+                    LOG.info("Devices: {}",devices);
                     setListData(devices.values().toArray(new Device[0]));
                     try {
                         Thread.sleep(2000);

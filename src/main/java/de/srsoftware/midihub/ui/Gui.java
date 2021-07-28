@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.*;
+import java.io.IOException;
 import java.util.*;
 
 public class Gui extends JFrame {
@@ -15,10 +16,10 @@ public class Gui extends JFrame {
     private static final String NANOKONTROL2 = "nanoKONTROL2";
     private final DeviceList deviceList;
     private final HashMap<Device, Control> devices = new HashMap<>();
-    private final MixerPanel mixerPanel;
+    private final MixerList mixerPanel;
     private final LogList logList;
 
-    public Gui(){
+    public Gui() throws IOException {
         super("MidiHub");
 
         setLayout(new BorderLayout());
@@ -33,20 +34,10 @@ public class Gui extends JFrame {
         add(logScroll,BorderLayout.CENTER);
 
         deviceList = new DeviceList();
-        deviceList.setPreferredSize(new Dimension(300,600));
         add(deviceList,BorderLayout.WEST);
 
-        mixerPanel = new MixerPanel();
-        mixerPanel.setLogger(logList);
-        mixerPanel.onConnect(mixer -> {
-            if (!devices.isEmpty()) {
-                Control receiver = devices.values().iterator().next();
-                receiver.assign(mixer);
-
-            }
-        });
-
-        add(mixerPanel,BorderLayout.NORTH);
+        mixerPanel = new MixerList();
+        add(mixerPanel,BorderLayout.EAST);
 
         pack();
         setLocationRelativeTo(null);
