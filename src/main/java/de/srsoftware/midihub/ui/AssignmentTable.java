@@ -3,6 +3,7 @@ package de.srsoftware.midihub.ui;
 import de.srsoftware.midihub.controllers.Controller;
 import de.srsoftware.midihub.controllers.ControllerInfo;
 import de.srsoftware.midihub.controllers.NanoKontrol2;
+import de.srsoftware.midihub.controllers.NanoPad2;
 import de.srsoftware.midihub.mixers.Mixer;
 import de.srsoftware.midihub.mixers.MixerInfo;
 
@@ -13,7 +14,6 @@ import java.awt.event.MouseListener;
 import java.util.HashMap;
 
 public class AssignmentTable extends JTable implements MouseListener {
-    private static final String NANOKONTROL2 = "nanoKONTROL2";
     private final AssignmentTableModel model;
     private HashMap<String, Controller> assignedControllers = new HashMap<>();
 
@@ -25,6 +25,17 @@ public class AssignmentTable extends JTable implements MouseListener {
         addMouseListener(this);
         setCellSelectionEnabled(true);
         setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+
+        Runtime.getRuntime().addShutdownHook(new Thread(){
+            @Override
+            public void run() {
+                disconnectDevices();
+            }
+        });
+    }
+
+    private void disconnectDevices() {
+        for (Controller controller : assignedControllers.values()) controller.disconnect().close();
     }
 
     @Override
@@ -69,12 +80,21 @@ public class AssignmentTable extends JTable implements MouseListener {
 
         try {
             switch (device.shortName()){
-                case NANOKONTROL2:
+                case NanoKontrol2.TYPE:
                     controller = new NanoKontrol2(device);
                     if (controller.assign(mixerInfo.getMixer())){
                         assignedControllers.put(device.getName(),controller);
                         return true;
                     }
+                    break;
+                case NanoPad2.TYPE:
+                    controller = new NanoPad2(device);
+                    if (controller.assign(mixerInfo.getMixer())){
+                        assignedControllers.put(device.getName(),controller);
+                        return true;
+                    }
+                    break;
+
                 default:
                     LogList.add("Unknown device: {}",device.shortName());
                     return false;

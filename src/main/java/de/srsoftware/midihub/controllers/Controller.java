@@ -6,5 +6,5 @@ import javax.sound.midi.Receiver;
 
 public interface Controller extends Receiver {
     public boolean assign(Mixer mixer);
-    public void disconnect();
+    public Controller disconnect();
 }

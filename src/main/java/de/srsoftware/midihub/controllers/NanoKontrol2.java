@@ -7,7 +7,8 @@ import org.slf4j.LoggerFactory;
 
 import javax.sound.midi.*;
 
-public class NanoKontrol2 implements Controller, Transmitter {
+public class NanoKontrol2 extends AbstractController {
+    public static final String TYPE = "nanoKONTROL2";
     private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(NanoKontrol2.class);
     private static final int LANES = 8;
     private static final int FADER1 = 0;
@@ -62,39 +63,25 @@ public class NanoKontrol2 implements Controller, Transmitter {
     private static final int PLAY = 41;
     private static final int REC = 45;
 
-    private final ControllerInfo device;
-    private Mixer mixer;
-    private Receiver receiver;
+
 
     public NanoKontrol2(ControllerInfo device) throws MidiUnavailableException {
-        this.device = device;
-        device.getInDevice().open();
-        device.getInDevice().getTransmitter().setReceiver(this);
-
-        MidiDevice out = device.getOutDevice();
-        out.open();
-        receiver = out.getReceiver();
+        super(device);
     }
 
     @Override
     public boolean assign(Mixer mixer) {
-        if (mixer == null) return false;
-        this.mixer = mixer;
-        mixer.highlightFaderGroup(LANES);
-        return true;
+        if (super.assign(mixer)) {
+            mixer.highlightFaderGroup(LANES);
+            return true;
+        }
+        return false;
     }
 
     @Override
-    public void close() {
-        device.getInDevice().close();
-        device.getOutDevice().close();
-    }
-
-    @Override
-    public void disconnect() {
+    public Controller disconnect() {
         mixer.unhighlightFaderGroup(LANES);
-        mixer.close();
-        mixer = null;
+        return super.disconnect();
     }
 
     private void getChannelButtons() {
@@ -102,16 +89,9 @@ public class NanoKontrol2 implements Controller, Transmitter {
             setLed(MUTE1+i-1,mixer.getMute(i));
             setLed(SOLO1+i-1,mixer.getSolo(i));
         }
-
     }
 
-    @Override
-    public Receiver getReceiver() {
-        return receiver;
-    }
-
-
-    private void handle(ShortMessage msg) {
+    protected void handle(ShortMessage msg) {
         int command = msg.getCommand();
         if (command == ShortMessage.CONTROL_CHANGE ) {
             handleControlChange(msg.getChannel(), msg.getData1(), msg.getData2());
@@ -208,17 +188,6 @@ public class NanoKontrol2 implements Controller, Transmitter {
         }
     }
 
-
-
-    @Override
-    public void send(MidiMessage midiMessage, long l) {
-        if (midiMessage instanceof ShortMessage) {
-            handle((ShortMessage)midiMessage);
-            return;
-        }
-        LogList.add("Message received: {} ({})",midiMessage,midiMessage.getClass().getSimpleName());
-    }
-
     public void setLed(int led,boolean enable){
         try {
             ShortMessage message = new ShortMessage();
@@ -227,10 +196,5 @@ public class NanoKontrol2 implements Controller, Transmitter {
         } catch (InvalidMidiDataException e) {
             e.printStackTrace();
         }
-    }
-
-    @Override
-    public void setReceiver(Receiver receiver) {
-        this.receiver = receiver;
     }
 }
