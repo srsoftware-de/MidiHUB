@@ -94,8 +94,11 @@ public class NanoKontrol2 implements Control, Transmitter {
     }
 
     private void getChannelButtons() {
-        for (int i = 1; i<=8; i++) setLed(MUTE1+i-1,mixer.getMute(i));
-        for (int i = 1; i<=8; i++) setLed(SOLO1+i-1,mixer.getSolo(i));
+        for (int i = 1; i<=8; i++) {
+            setLed(MUTE1+i-1,mixer.getMute(i));
+            setLed(SOLO1+i-1,mixer.getSolo(i));
+        }
+
     }
 
     @Override
@@ -106,13 +109,11 @@ public class NanoKontrol2 implements Control, Transmitter {
 
     private void handle(ShortMessage msg) {
         int command = msg.getCommand();
-        switch (command){
-            case ShortMessage.CONTROL_CHANGE:
-                handleControlChange(msg.getChannel(),msg.getData1(),msg.getData2());
-                break;
-            default:
-                LogList.add("Unexpected command type: {}",command);
-                LOG.info("Command: {}, channel {}, data 1: {}, data 2: {}",command,msg.getChannel(),msg.getData1(),msg.getData2());
+        if (command == ShortMessage.CONTROL_CHANGE ) {
+            handleControlChange(msg.getChannel(), msg.getData1(), msg.getData2());
+        } else {
+            LogList.add("Unexpected command type: {}",command);
+            LOG.info("Command: {}, channel {}, data 1: {}, data 2: {}",command,msg.getChannel(),msg.getData1(),msg.getData2());
         }
     }
 

@@ -14,8 +14,7 @@ public class Gui extends JFrame {
 
         setLayout(new BorderLayout());
 
-
-
+        LogList.setMaxLength(128);
         JScrollPane logScroll = new JScrollPane(LogList.get());
         logScroll.setPreferredSize(new Dimension(600,300));
         add(logScroll,BorderLayout.NORTH);

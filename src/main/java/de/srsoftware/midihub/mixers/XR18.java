@@ -20,11 +20,11 @@ public class XR18 extends XSeries{
     public static final String MODEL = "XR18";
 
     public XR18(String host, int port) throws IOException {
-        super(host, port, 8, 16);
+        super(host, port, 10, 21);
     }
 
     @Override
     protected String gainAddress(int num) {
-        return "/ch/" + channel(num) + "/preamp/trim";
+        return "/headamp/" + channel(num) + "/gain";
     }
 }
