@@ -29,8 +29,8 @@ public abstract class XSeries extends AbstractMixer {
     public void changeMarker(int delta) {
         unhighlightBus(bus);
         bus += delta;
-        if (bus > buses) bus = 0;
-        if (bus < 0) bus = buses;
+        if (bus >= buses) bus = 0;
+        if (bus < 0) bus = buses-1;
         highlightBus(bus);
     }
 
@@ -65,22 +65,6 @@ public abstract class XSeries extends AbstractMixer {
 
     protected abstract String gainAddress(int num);
 
-    private synchronized float getGain(int num) {
-        try {
-            String address = gainAddress(num);
-            List<Object> result = request(source, address);
-            if (result == null || result.isEmpty()) return 0f;
-            Object val = result.get(0);
-            return val instanceof Float ? (Float) val : 0f;
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return 0f;
-    }
-
-
-
     @Override
     public boolean getMute(int num) {
         num += offset;
@@ -89,14 +73,6 @@ public abstract class XSeries extends AbstractMixer {
         LogList.add("Received {} from console", result);
         if (result == null || result.isEmpty()) return false;
         return result.get(0).equals(0);
-    }
-
-    private float getPano(int num) {
-        String address = "/ch/" + channel(num) + "/mix/pan";
-        List<Object> result = request(source,address);
-        if (result == null || result.isEmpty()) return 0f;
-        Object val = result.get(0);
-        return val instanceof Float ? (Float) val : 0f;
     }
 
     @Override
@@ -131,32 +107,31 @@ public abstract class XSeries extends AbstractMixer {
             lastChannel = channel;
         }
 
-        float new_val = normalized;
         float old_val = getFader(channel-1,bus);
 
-        if (Math.abs(new_val - old_val) > TRAP) return;
-        setFader(channel-1,bus,new_val);
+        if (Math.abs(normalized - old_val) > TRAP) return;
+        setFader(channel-1,bus,normalized);
 
         String chnl = channel(channel);
 
         String address = bus == MAIN ? "/ch/" + chnl + "/mix/fader" : "/ch/" + chnl + "/mix/" + channel(bus) + "/level";
-        send(address,new_val);
+        send(address,normalized);
     }
 
-    private void handleGain(int num, float percent) {
-        num += offset;
-        if (num != lastChannel) {
+    private void handleGain(int num, float normalized) {
+        int channel = num + offset;
+        if (channel != lastChannel) {
             unhighlightChannel(lastChannel);
-            highlightChannel(num);
-            lastChannel = num;
+            highlightChannel(channel);
+            lastChannel = channel;
         }
 
-        float new_val = percent / 100;
-        float old_val = getGain(num);
+        float old_val = getGain(channel-1);
 
-        if (Math.abs(new_val - old_val) > TRAP) return;
+        if (Math.abs(normalized - old_val) > TRAP) return;
+        setGain(channel-1,normalized);
 
-        send(gainAddress(num),new_val);
+        send(gainAddress(channel),normalized);
     }
 
     @Override
@@ -172,26 +147,26 @@ public abstract class XSeries extends AbstractMixer {
         return enabled;
     }
 
-    private void handlePano(int num, float percent) {
-        num += offset;
-        if (num != lastChannel) {
+    private void handlePano(int num, float normalized) {
+        int channel = num + offset;
+        if (channel != lastChannel) {
             unhighlightChannel(lastChannel);
-            highlightChannel(num);
-            lastChannel = num;
+            highlightChannel(channel);
+            lastChannel = channel;
         }
 
-        float new_val = percent / 100;
-        float old_val = getPano(num);
+        float old_val = getPano(channel-1);
 
-        if (Math.abs(new_val - old_val) > TRAP) return;
+        if (Math.abs(normalized - old_val) > TRAP) return;
+        setPano(channel-1,normalized);
 
-        send("/ch/" + channel(num) + "/mix/pan",new_val);
+        send("/ch/" + channel(channel) + "/mix/pan",normalized);
     }
 
     @Override
-    public void handlePoti(int num, float percent) {
-        if (bus == MAIN) handleGain(num, percent);
-        else handlePano(num, percent);
+    public void handlePoti(int num, float normalized) {
+        if (bus == MAIN) handleGain(num, normalized);
+        else handlePano(num, normalized);
 
     }
 
@@ -236,6 +211,17 @@ public abstract class XSeries extends AbstractMixer {
         }
     }
 
+    void processGain(int channel, OSCMessage msg) {
+        List<Object> args = msg.getArguments();
+        if (args.isEmpty()) return;
+        Object o = args.get(0);
+        if (o instanceof Float){
+            setGain(channel,(float)o);
+        } else {
+            LOG.debug("processGain(chnl {}) expected float value, but got {}", channel,o.getClass().getSimpleName());
+        }
+    }
+
     protected void processMessage(OSCMessageEvent event) {
         OSCMessage msg = event.getMessage();
         Vector<String> address = address(msg);
@@ -244,6 +230,9 @@ public abstract class XSeries extends AbstractMixer {
         switch (head) {
             case "ch":
                 processChannelMessage(address, msg);
+                break;
+            case "xinfo":
+                processXINfo(msg);
                 break;
             default:
                 LOG.info("No action defined for {}…/{}", head, address);
@@ -256,37 +245,73 @@ public abstract class XSeries extends AbstractMixer {
             int channel = Integer.parseInt(head)-1;
             processChannelMessage(channel,address,msg);
         } catch (NumberFormatException nfe){
-            LOG.warn("{} is not a channel number!");
+            LOG.warn("{} is not a channel number!",head);
         }
     }
 
-    private void processChannelMessage(int channel, Vector<String> address, OSCMessage msg) {
-        String head = address.remove(0);
-        switch (head) {
-            case "mix":
-                processChannelMessage(channel,MAIN,address,msg);
-                break;
-            default:
-                LOG.info("Unknown path {} / {}", head, address);
-        }
-    }
+    abstract void processChannelMessage(int channel, Vector<String> address, OSCMessage msg);
 
-    private void processChannelMessage(int channel, int bus, Vector<String> address, OSCMessage msg) {
+    void processChannelBusMessage(int channel, Vector<String> address, OSCMessage msg) {
         String head = address.remove(0);
         List<Object> args = msg.getArguments();
         switch (head) {
             case "fader":
-                if (args.size()==1) setFader(channel,bus,args.get(0));
+                if (args.size()==1) setFader(channel,MAIN,args.get(0));
+                break;
+            case "pan":
+                processPano(channel,msg);
+                break;
+            default:
+                try {
+                    int bus = Integer.parseInt(head);
+                    processChannelBusMessage(channel,bus,address,msg);
+                } catch (NumberFormatException e) {
+                    LOG.info("Unknown path {} / {}", head, address);
+                }
+        }
+    }
+
+    private void processChannelBusMessage(int channel, int bus, Vector<String> address, OSCMessage msg) {
+        String head = address.remove(0);
+        List<Object> args = msg.getArguments();
+        switch (head) {
+            case "level":
+                if (args.size() == 1) setFader(channel, bus, args.get(0));
                 break;
             default:
                 LOG.info("Unknown path {} / {}", head, address);
         }
     }
 
-    private void requestFaders(){
-        for (int channel = 1; channel<=channels; channel++)
-        send("/ch/"+channel(channel)+"/mix/fader");
+    void processPano(int channel, OSCMessage msg) {
+        List<Object> args = msg.getArguments();
+        if (args.isEmpty()) return;
+        Object o = args.get(0);
+        if (o instanceof Float){
+            setPano(channel,(float)o);
+        } else {
+            LOG.debug("processGain(chnl {}) expected float value, but got {}", channel,o.getClass().getSimpleName());
+        }
     }
+
+    private void processXINfo(OSCMessage msg) {
+        LOG.debug("processXInfo({})",msg.getArguments());
+    }
+
+    private void requestFaders(){
+        for (int channel = 1; channel<=channels; channel++) {
+            for (int bus = 1; bus<=buses; bus++) {
+                send("/ch/"+channel(channel)+"/mix/"+channel(bus)+"/level");
+            }
+        }
+        for (int channel = 1; channel<=channels; channel++) {
+            send("/ch/" + channel(channel) + "/mix/fader");
+            send(gainAddress(channel));
+            send("/ch/" + channel(channel) + "/mix/pan");
+        }
+
+    }
+
 
     private void setFader(int channel, int bus, Object o) {
         if (o instanceof Float){

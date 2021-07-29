@@ -28,7 +28,7 @@ public abstract class AbstractMixer implements Mixer {
     final int channels;
 
     private byte[] mutes, solos;
-    private float[] gains;
+    private float[] gains,panos;
     private float[][]faders;
 
     public AbstractMixer(String host, int port, int buses, int channels) throws IOException {
@@ -37,12 +37,13 @@ public abstract class AbstractMixer implements Mixer {
         mutes = new byte[channels];
         solos = new byte[channels];
         gains = new float[channels];
+        panos = new float[channels];
         faders = new float[buses][channels];
         InetSocketAddress remoteSocket = new InetSocketAddress(host, port);
         SocketAddress localSocket = new InetSocketAddress(port);
         sink = new OSCPortOut(new OSCSerializerAndParserBuilder(), remoteSocket, localSocket);
         source = new OSCPortIn(localSocket);
-        source.getDispatcher().addListener(new OSCPatternAddressMessageSelector(""),event -> processMessage(event));
+        source.getDispatcher().addListener(new OSCPatternAddressMessageSelector(""),this::processMessage);
         source.startListening();
         LogList.add("Connected to {} @ {}:{}", getClass().getSimpleName(), host, port);
     }
@@ -61,6 +62,18 @@ public abstract class AbstractMixer implements Mixer {
         return result;
     }
 
+    public float getGain(int channel) {
+        float result = (channel < channels) ? gains[channel] : 0f;
+        LOG.debug("getGain(chnl {}) → {}",channel,result);
+        return result;
+    }
+
+    public float getPano(int channel) {
+        float result = (channel < channels) ? panos[channel] : 0f;
+        LOG.debug("getPano(chnl {}) → {}",channel,result);
+        return result;
+    }
+
     protected abstract void processMessage(OSCMessageEvent event);
 
 
@@ -72,13 +85,8 @@ public abstract class AbstractMixer implements Mixer {
         dispatcher.addListener(selector, listener);
         try {
             send(address);
-            List<Object> result = promise.get(100, TimeUnit.MILLISECONDS);
-            return result;
-        } catch (ExecutionException e) {
-            e.printStackTrace();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (TimeoutException e) {
+            return promise.get(100, TimeUnit.MILLISECONDS);
+        } catch (Exception e) {
             e.printStackTrace();
         } finally {
             dispatcher.removeListener(selector,listener);
@@ -100,5 +108,15 @@ public abstract class AbstractMixer implements Mixer {
     protected void setFader(int channel, int bus, float normalized) {
         LOG.debug("setFader(chnl {}, bus {} → {})",channel,bus,normalized);
         faders[bus][channel] = normalized;
+    }
+
+    protected void setGain(int channel, float normalized) {
+        LOG.debug("setGain(chnl {}: → {})",channel,normalized);
+        gains[channel] = normalized;
+    }
+
+    protected void setPano(int channel, float normalized) {
+        LOG.debug("setPano(chnl {}: → {})",channel,normalized);
+        panos[channel] = normalized;
     }
 }

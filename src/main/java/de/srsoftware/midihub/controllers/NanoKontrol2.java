@@ -141,7 +141,7 @@ public class NanoKontrol2 implements Controller, Transmitter {
             case POTI6:
             case POTI7:
             case POTI8:
-                mixer.handlePoti(data1-POTI1+1,100*data2/127f);
+                mixer.handlePoti(data1-POTI1+1,data2/127f);
                 break;
             case MUTE1:
             case MUTE2:
