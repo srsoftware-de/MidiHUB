@@ -101,7 +101,7 @@ public class NanoKontrol2 extends AbstractController {
         }
     }
 
-    private void handleControlChange(int channel, int data1, int data2) {
+    protected void handleControlChange(int channel, int data1, int data2) {
         if (mixer == null) {
             LogList.add("received control change {}/{} on channel, but no device is assigned!",data1,data2,channel);
             return;

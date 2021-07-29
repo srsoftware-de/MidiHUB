@@ -47,6 +47,7 @@ public abstract class AbstractController implements Controller, Transmitter {
 
     protected abstract void handle(ShortMessage midiMessage);
 
+
     @Override
     public void send(MidiMessage midiMessage, long l) {
         if (midiMessage instanceof ShortMessage) {

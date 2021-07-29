@@ -101,6 +101,7 @@ public class AssignmentTable extends JTable implements MouseListener {
             }
         } catch (Exception e) {
         }
+        LogList.add("Failed to assign {} to {}!",device.getName(),mixerInfo);
         return false;
     }
 }
