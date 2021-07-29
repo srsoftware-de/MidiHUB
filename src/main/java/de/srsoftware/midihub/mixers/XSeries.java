@@ -1,13 +1,18 @@
 package de.srsoftware.midihub.mixers;
 
-import com.illposed.osc.OSCSerializeException;
-import de.srsoftware.midihub.WatchDog;
+import com.illposed.osc.*;
+import com.illposed.osc.messageselector.OSCPatternAddressMessageSelector;
+import com.illposed.osc.transport.udp.OSCPortIn;
 import de.srsoftware.midihub.ui.LogList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 public abstract class XSeries extends AbstractMixer {
     private static final Logger LOG = LoggerFactory.getLogger(XSeries.class);
@@ -66,10 +71,7 @@ public abstract class XSeries extends AbstractMixer {
     private synchronized float getGain(int num) {
         try {
             String address = gainAddress(num);
-
-            WatchDog wd = new WatchDog(source, address);
-            send(address);
-            List<Object> result = wd.getResult();
+            List<Object> result = request(source, address);
             if (result == null || result.isEmpty()) return 0f;
             Object val = result.get(0);
             return val instanceof Float ? (Float) val : 0f;
@@ -80,75 +82,42 @@ public abstract class XSeries extends AbstractMixer {
         return 0f;
     }
 
-    private synchronized float getFader(int bus, int num) {
-        try {
-            String channel = channel(num);
-            String address = bus == MAIN ? "/ch/" + channel + "/mix/fader" : "/ch/" + channel + "/mix/" + channel(bus) + "/level";
+    private float getFader(int bus, int num) {
+        String channel = channel(num);
+        String address = bus == MAIN ? "/ch/" + channel + "/mix/fader" : "/ch/" + channel + "/mix/" + channel(bus) + "/level";
 
-            WatchDog wd = new WatchDog(source, address);
-            send(address);
-            List<Object> result = wd.getResult();
-            if (result == null || result.isEmpty()) return 0f;
-            Object val = result.get(0);
-            return val instanceof Float ? (Float) val : 0f;
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return 0f;
+        List<Object> result = request(source,address);
+        if (result == null || result.isEmpty()) return 0f;
+        Object val = result.get(0);
+        return val instanceof Float ? (Float) val : 0f;
     }
 
     @Override
-    public synchronized boolean getMute(int num) {
-        try {
-            num += offset;
-            String address = "/ch/" + channel(num) + "/mix/on";
-
-            WatchDog wd = new WatchDog(source, address);
-            send(address);
-            List<Object> result = wd.getResult();
-            LogList.add("Received {} from console", result);
-            if (result == null || result.isEmpty()) return false;
-            return result.get(0).equals(0);
-        } catch (IOException | OSCSerializeException e) {
-            e.printStackTrace();
-        }
-        return false;
+    public boolean getMute(int num) {
+        num += offset;
+        String address = "/ch/" + channel(num) + "/mix/on";
+        List<Object> result = request(source, address);
+        LogList.add("Received {} from console", result);
+        if (result == null || result.isEmpty()) return false;
+        return result.get(0).equals(0);
     }
 
-    private synchronized float getPano(int num) {
-        try {
-            String address = "/ch/" + channel(num) + "/mix/pan";
-
-            WatchDog wd = new WatchDog(source, address);
-            send(address);
-            List<Object> result = wd.getResult();
-            if (result == null || result.isEmpty()) return 0f;
-            Object val = result.get(0);
-            return val instanceof Float ? (Float) val : 0f;
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return 0f;
+    private float getPano(int num) {
+        String address = "/ch/" + channel(num) + "/mix/pan";
+        List<Object> result = request(source,address);
+        if (result == null || result.isEmpty()) return 0f;
+        Object val = result.get(0);
+        return val instanceof Float ? (Float) val : 0f;
     }
 
     @Override
-    public synchronized boolean getSolo(int num) {
-        try {
-            num += offset;
-            String address = "/-stat/solosw/" + channel(num);
-
-            WatchDog wd = new WatchDog(source, address);
-            send(address);
-            List<Object> result = wd.getResult();
-            LogList.add("Received {} from console", result);
-            if (result == null || result.isEmpty()) return false;
-            return result.get(0).equals(1);
-        } catch (IOException | OSCSerializeException e) {
-            e.printStackTrace();
-        }
-        return false;
+    public boolean getSolo(int num) {
+        num += offset;
+        String address = "/-stat/solosw/" + channel(num);
+        List<Object> result = request(source, address);
+        LogList.add("Received {} from console", result);
+        if (result == null || result.isEmpty()) return false;
+        return result.get(0).equals(1);
     }
 
 

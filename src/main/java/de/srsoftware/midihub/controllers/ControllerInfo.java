@@ -1,4 +1,4 @@
-package de.srsoftware.midihub;
+package de.srsoftware.midihub.controllers;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -6,14 +6,14 @@ import org.slf4j.LoggerFactory;
 import javax.sound.midi.MidiDevice;
 import javax.sound.midi.MidiUnavailableException;
 
-public class Device {
-    private static Logger LOG = LoggerFactory.getLogger(Device.class);
+public class ControllerInfo {
+    private static Logger LOG = LoggerFactory.getLogger(ControllerInfo.class);
 
     private final String name;
     private MidiDevice inDevice;
     private MidiDevice outDevice;
 
-    public Device(String name) throws MidiUnavailableException {
+    public ControllerInfo(String name) throws MidiUnavailableException {
         this.name = name;
     }
 

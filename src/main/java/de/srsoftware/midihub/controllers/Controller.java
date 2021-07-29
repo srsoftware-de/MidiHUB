@@ -4,6 +4,6 @@ import de.srsoftware.midihub.mixers.Mixer;
 
 import javax.sound.midi.Receiver;
 
-public interface Control extends Receiver {
+public interface Controller extends Receiver {
     public boolean assign(Mixer mixer);
 }

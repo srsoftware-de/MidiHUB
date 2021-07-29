@@ -1,9 +1,8 @@
 package de.srsoftware.midihub.ui;
 
-import de.srsoftware.midihub.AssignmentTableModel;
-import de.srsoftware.midihub.Device;
-import de.srsoftware.midihub.MixerInfo;
+import de.srsoftware.midihub.controllers.ControllerInfo;
 import de.srsoftware.midihub.controllers.NanoKontrol2;
+import de.srsoftware.midihub.mixers.MixerInfo;
 
 import javax.swing.*;
 import java.awt.*;
@@ -30,7 +29,7 @@ public class AssignmentTable extends JTable implements MouseListener {
         int col = columnAtPoint(e.getPoint());
         if (row > 0 && col > 0) {
             MixerInfo mixer = model.getMixer(row - 1);
-            Device device = model.getController(col - 1);
+            ControllerInfo device = model.getController(col - 1);
             if (assign(device,mixer)) model.setValueAt("connected",row,col);
         }
     }
@@ -55,7 +54,7 @@ public class AssignmentTable extends JTable implements MouseListener {
 
     }
 
-    private boolean assign(Device device, MixerInfo mixerInfo) {
+    private boolean assign(ControllerInfo device, MixerInfo mixerInfo) {
         try {
             switch (device.shortName()){
                 case NANOKONTROL2:

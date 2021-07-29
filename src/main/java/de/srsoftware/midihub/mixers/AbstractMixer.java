@@ -1,8 +1,6 @@
 package de.srsoftware.midihub.mixers;
 
-import com.illposed.osc.OSCMessage;
-import com.illposed.osc.OSCSerializeException;
-import com.illposed.osc.OSCSerializerAndParserBuilder;
+import com.illposed.osc.*;
 import com.illposed.osc.messageselector.OSCPatternAddressMessageSelector;
 import com.illposed.osc.transport.udp.OSCPortIn;
 import com.illposed.osc.transport.udp.OSCPortOut;
@@ -15,6 +13,10 @@ import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 public abstract class AbstractMixer implements Mixer {
 
@@ -37,6 +39,32 @@ public abstract class AbstractMixer implements Mixer {
             OSCMessage msg = event.getMessage();
             LOG.debug("Received OSC message: {} @ {}",msg.getArguments(),msg.getAddress());
         });
+    }
+
+    synchronized List<Object> request(OSCPortIn source, String address) {
+        OSCPacketDispatcher dispatcher = source.getDispatcher();
+        OSCPatternAddressMessageSelector selector = new OSCPatternAddressMessageSelector(address);
+        CompletableFuture<List<Object>> promise = new CompletableFuture<>();
+        OSCMessageListener listener = event -> promise.complete(event.getMessage().getArguments());
+        dispatcher.addListener(selector, listener);
+        try {
+            send(address);
+            List<Object> result = promise.get(100, TimeUnit.MILLISECONDS);
+            return result;
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (TimeoutException e) {
+            e.printStackTrace();
+        } catch (OSCSerializeException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            dispatcher.removeListener(selector,listener);
+        }
+        return null;
     }
 
     protected void send(String address,Object... args) throws OSCSerializeException, IOException {

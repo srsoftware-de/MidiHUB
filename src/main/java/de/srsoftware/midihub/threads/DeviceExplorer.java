@@ -1,22 +1,24 @@
 package de.srsoftware.midihub.threads;
 
-import de.srsoftware.midihub.Device;
+import de.srsoftware.midihub.controllers.ControllerInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.sound.midi.MidiDevice;
 import javax.sound.midi.MidiSystem;
 import javax.sound.midi.MidiUnavailableException;
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Vector;
 
 public class DeviceExplorer {
     private static Logger LOG = LoggerFactory.getLogger(DeviceExplorer.class);
     public static final DeviceExplorer singleton = new DeviceExplorer();
-    private HashMap<String, Device> devices = new HashMap<>();
+    private HashMap<String, ControllerInfo> devices = new HashMap<>();
     private HashSet<Listener> listeners = new HashSet<>();
 
-    public static Device[] deviceList() {
-        return singleton.devices.values().toArray(new Device[0]);
+    public static ControllerInfo[] deviceList() {
+        return singleton.devices.values().toArray(new ControllerInfo[0]);
     }
 
     public static void addListener(Listener listener) {
@@ -25,7 +27,7 @@ public class DeviceExplorer {
 
 
     public interface Listener{
-        void devicesDiscovered(Vector<Device> newDevices);
+        void devicesDiscovered(Vector<ControllerInfo> newDevices);
     }
 
     private DeviceExplorer(){
@@ -33,7 +35,7 @@ public class DeviceExplorer {
             @Override
             public void run() {
                 while (true) {
-                    Vector<Device> newDevices = new Vector<>();
+                    Vector<ControllerInfo> newDevices = new Vector<>();
                     MidiDevice.Info[] infos = MidiSystem.getMidiDeviceInfo();
                     for (MidiDevice.Info info : infos){
                         try {
@@ -41,18 +43,18 @@ public class DeviceExplorer {
                             String type = device.getClass().getSimpleName();
                             String name = info.getName();
                             LOG.debug("Discovered {} \"{}\"",type,name);
-                            Device midiInfo = devices.get(name);
+                            ControllerInfo midiInfo = devices.get(name);
                             switch (type){
                                 case "MidiOutDevice":
                                     if (midiInfo == null){
-                                        devices.put(name,midiInfo = new Device(name));
+                                        devices.put(name,midiInfo = new ControllerInfo(name));
                                         newDevices.add(midiInfo);
                                     }
                                     midiInfo.setOutDevice(device);
                                     break;
                                 case "MidiInDevice":
                                     if (midiInfo == null) {
-                                        devices.put(name,midiInfo = new Device(name));
+                                        devices.put(name,midiInfo = new ControllerInfo(name));
                                         newDevices.add(midiInfo);
                                     }
                                     midiInfo.setInDevice(device);

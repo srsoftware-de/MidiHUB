@@ -1,14 +1,13 @@
 package de.srsoftware.midihub.controllers;
 
 
-import de.srsoftware.midihub.Device;
-import de.srsoftware.midihub.ui.LogList;
 import de.srsoftware.midihub.mixers.Mixer;
+import de.srsoftware.midihub.ui.LogList;
 import org.slf4j.LoggerFactory;
 
 import javax.sound.midi.*;
 
-public class NanoKontrol2 implements Control, Transmitter {
+public class NanoKontrol2 implements Controller, Transmitter {
     private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(NanoKontrol2.class);
     private static final int LANES = 8;
     private static final int FADER1 = 0;
@@ -63,11 +62,11 @@ public class NanoKontrol2 implements Control, Transmitter {
     private static final int PLAY = 41;
     private static final int REC = 45;
 
-    private final Device device;
+    private final ControllerInfo device;
     private Mixer mixer;
     private Receiver receiver;
 
-    public NanoKontrol2(Device device) throws MidiUnavailableException {
+    public NanoKontrol2(ControllerInfo device) throws MidiUnavailableException {
         this.device = device;
         device.getInDevice().open();
         device.getInDevice().getTransmitter().setReceiver(this);

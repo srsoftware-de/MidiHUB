@@ -1,10 +1,6 @@
-package de.srsoftware.midihub;
+package de.srsoftware.midihub.mixers;
 
 import com.illposed.osc.OSCMessage;
-import de.srsoftware.midihub.mixers.Mixer;
-import de.srsoftware.midihub.mixers.XR18;
-import de.srsoftware.midihub.threads.MixerExplorer;
-import de.srsoftware.midihub.ui.LogList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,6 +39,8 @@ public class MixerInfo implements Comparable<MixerInfo> {
             switch (model) {
                 case XR18.MODEL:
                     return new XR18(address, port);
+                case M32C.MODEL:
+                    return new M32C(address,port);
             }
         } catch (Exception e){
             LOG.warn("Failed to instatiate mixer {}",this,e);

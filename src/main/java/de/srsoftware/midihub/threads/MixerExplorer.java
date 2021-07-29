@@ -2,22 +2,19 @@ package de.srsoftware.midihub.threads;
 
 import com.illposed.osc.*;
 import com.illposed.osc.messageselector.OSCPatternAddressMessageSelector;
-import com.illposed.osc.transport.udp.OSCPort;
 import com.illposed.osc.transport.udp.OSCPortIn;
 import com.illposed.osc.transport.udp.OSCPortOut;
-import de.srsoftware.midihub.Device;
-import de.srsoftware.midihub.MixerInfo;
-import de.srsoftware.midihub.ui.LogList;
+import de.srsoftware.midihub.mixers.MixerInfo;
 import de.srsoftware.tools.Tools;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.lang.reflect.Field;
 import java.net.InetSocketAddress;
-import java.net.SocketAddress;
-import java.nio.channels.DatagramChannel;
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 
 public class MixerExplorer implements OSCMessageListener {
     private static final String ADDRESS = "/xinfo";
@@ -38,6 +35,7 @@ public class MixerExplorer implements OSCMessageListener {
 
     @Override
     public void acceptMessage(OSCMessageEvent event) {
+
         OSCMessage message = event.getMessage();
         int oldSize = mixers.size();
         Object source = event.getSource();
@@ -86,15 +84,11 @@ public class MixerExplorer implements OSCMessageListener {
                         OSCPortOut broadcast = new OSCPortOut(new OSCSerializerAndParserBuilder(), socket, SOCK_LOCAL);
                         broadcast.send(message);
                         broadcast.close();
-                    } catch (IOException | OSCSerializeException e) {
+                        sleep(5000);
+                    } catch (IOException | OSCSerializeException | InterruptedException e) {
                         e.printStackTrace();
                     }
 
-                    try {
-                        Thread.sleep(10000);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
                 }
             }
         }.start();

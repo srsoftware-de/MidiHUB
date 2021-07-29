@@ -15,6 +15,6 @@
 	</root>
 	
 	<logger name="de.srsoftware.midihub" level="DEBUG" />
-	<logger name="de.srsoftware.midihub.ui.DeviceList" level="WARN" />
+	<logger name="de.srsoftware.midihub.threads.DeviceExplorer" level="WARN" />
 
 </configuration>

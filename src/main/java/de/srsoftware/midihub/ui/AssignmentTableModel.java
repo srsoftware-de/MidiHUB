@@ -1,5 +1,7 @@
-package de.srsoftware.midihub;
+package de.srsoftware.midihub.ui;
 
+import de.srsoftware.midihub.controllers.ControllerInfo;
+import de.srsoftware.midihub.mixers.MixerInfo;
 import de.srsoftware.midihub.threads.DeviceExplorer;
 import de.srsoftware.midihub.threads.MixerExplorer;
 import org.slf4j.Logger;
@@ -53,7 +55,7 @@ public class AssignmentTableModel extends DefaultTableModel {
         return MixerExplorer.mixerList()[i];
     }
 
-    public Device getController(int i) {
+    public ControllerInfo getController(int i) {
         return DeviceExplorer.deviceList()[i];
     }
 
