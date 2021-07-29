@@ -1,18 +1,14 @@
 package de.srsoftware.midihub.mixers;
 
-import com.illposed.osc.*;
-import com.illposed.osc.messageselector.OSCPatternAddressMessageSelector;
-import com.illposed.osc.transport.udp.OSCPortIn;
+import com.illposed.osc.OSCMessage;
+import com.illposed.osc.OSCMessageEvent;
 import de.srsoftware.midihub.ui.LogList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.Vector;
 
 public abstract class XSeries extends AbstractMixer {
     private static final Logger LOG = LoggerFactory.getLogger(XSeries.class);
@@ -26,6 +22,7 @@ public abstract class XSeries extends AbstractMixer {
 
     public XSeries(String host, int port, int buses, int channels) throws IOException {
         super(host, port, buses, channels);
+        requestFaders();
     }
 
 
@@ -82,15 +79,7 @@ public abstract class XSeries extends AbstractMixer {
         return 0f;
     }
 
-    private float getFader(int bus, int num) {
-        String channel = channel(num);
-        String address = bus == MAIN ? "/ch/" + channel + "/mix/fader" : "/ch/" + channel + "/mix/" + channel(bus) + "/level";
 
-        List<Object> result = request(source,address);
-        if (result == null || result.isEmpty()) return 0f;
-        Object val = result.get(0);
-        return val instanceof Float ? (Float) val : 0f;
-    }
 
     @Override
     public boolean getMute(int num) {
@@ -122,7 +111,6 @@ public abstract class XSeries extends AbstractMixer {
 
 
 
-
     @Override
     public void handleCycle() {
         try {
@@ -134,8 +122,28 @@ public abstract class XSeries extends AbstractMixer {
 
 
     @Override
-    public void handleFader(int num, float percent) {
+    public void handleFader(int num, float normalized) {
+        LOG.debug("handleFader({}: → {})",num,normalized);
+        int channel = num + offset;
+        if (channel != lastChannel) {
+            unhighlightChannel(lastChannel);
+            highlightChannel(channel);
+            lastChannel = channel;
+        }
 
+        float new_val = normalized;
+        float old_val = getFader(channel-1,bus);
+
+        if (Math.abs(new_val - old_val) > TRAP) return;
+        setFader(channel-1,bus,new_val);
+
+        String chnl = channel(channel);
+
+        String address = bus == MAIN ? "/ch/" + chnl + "/mix/fader" : "/ch/" + chnl + "/mix/" + channel(bus) + "/level";
+        send(address,new_val);
+    }
+
+    private void handleGain(int num, float percent) {
         num += offset;
         if (num != lastChannel) {
             unhighlightChannel(lastChannel);
@@ -144,77 +152,40 @@ public abstract class XSeries extends AbstractMixer {
         }
 
         float new_val = percent / 100;
-        float old_val = getFader(bus, num);
+        float old_val = getGain(num);
 
         if (Math.abs(new_val - old_val) > TRAP) return;
 
-        String channel = channel(num);
-
-        String address = bus == MAIN ? "/ch/" + channel + "/mix/fader" : "/ch/" + channel + "/mix/" + channel(bus) + "/level";
-        try {
-            send(address,new_val);
-        } catch (IOException | OSCSerializeException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private void handleGain(int num, float percent) {
-        try {
-
-            num += offset;
-            if (num != lastChannel) {
-                unhighlightChannel(lastChannel);
-                highlightChannel(num);
-                lastChannel = num;
-            }
-
-            float new_val = percent / 100;
-            float old_val = getGain(num);
-
-            if (Math.abs(new_val - old_val) > TRAP) return;
-
-            send(gainAddress(num),new_val);
-        } catch (IOException | OSCSerializeException e) {
-            e.printStackTrace();
-        }
+        send(gainAddress(num),new_val);
     }
 
     @Override
     public boolean handleMute(int num, boolean enabled) {
-        try {
-            enabled = !getMute(num);
-            num += offset;
-            if (num != lastChannel) {
-                unhighlightChannel(lastChannel);
-                highlightChannel(num);
-                lastChannel = num;
-            }
-            send("/ch/" + channel(num) + "/mix/on",enabled ? 0 : 1);
-        } catch (IOException | OSCSerializeException e) {
-            e.printStackTrace();
+        enabled = !getMute(num);
+        num += offset;
+        if (num != lastChannel) {
+            unhighlightChannel(lastChannel);
+            highlightChannel(num);
+            lastChannel = num;
         }
+        send("/ch/" + channel(num) + "/mix/on",enabled ? 0 : 1);
         return enabled;
     }
 
     private void handlePano(int num, float percent) {
-        try {
-
-            num += offset;
-            if (num != lastChannel) {
-                unhighlightChannel(lastChannel);
-                highlightChannel(num);
-                lastChannel = num;
-            }
-
-            float new_val = percent / 100;
-            float old_val = getPano(num);
-
-            if (Math.abs(new_val - old_val) > TRAP) return;
-
-            send("/ch/" + channel(num) + "/mix/pan",new_val);
-        } catch (IOException | OSCSerializeException e) {
-            e.printStackTrace();
+        num += offset;
+        if (num != lastChannel) {
+            unhighlightChannel(lastChannel);
+            highlightChannel(num);
+            lastChannel = num;
         }
+
+        float new_val = percent / 100;
+        float old_val = getPano(num);
+
+        if (Math.abs(new_val - old_val) > TRAP) return;
+
+        send("/ch/" + channel(num) + "/mix/pan",new_val);
     }
 
     @Override
@@ -237,46 +208,91 @@ public abstract class XSeries extends AbstractMixer {
 
     @Override
     public boolean handleSolo(int num, boolean enabled) {
-        try {
-            num += offset;
-            if (num != lastChannel) {
-                unhighlightChannel(lastChannel);
-                highlightChannel(num);
-                lastChannel = num;
-            }
-            send("/-stat/solosw/" + channel(num),enabled?1:0);
-        } catch (IOException | OSCSerializeException e) {
-            e.printStackTrace();
+        num += offset;
+        if (num != lastChannel) {
+            unhighlightChannel(lastChannel);
+            highlightChannel(num);
+            lastChannel = num;
         }
+        send("/-stat/solosw/" + channel(num),enabled?1:0);
+
         return enabled;
     }
 
     public void highlightBus(int bus) {
-        try {
-            send("/bus/" + channel(bus) + "/config/color",3);
-            LOG.debug("Activated bus {}",bus);
-        } catch (IOException | OSCSerializeException e) {
-            e.printStackTrace();
-        }
+        send("/bus/" + channel(bus) + "/config/color",3);
+        LOG.debug("Activated bus {}",bus);
     }
 
     @Override
     public void highlightChannel(int num) {
-        try {
-            send("/ch/" + channel(num) + "/config/color",9);
-        } catch (IOException | OSCSerializeException e) {
-            e.printStackTrace();
-        }
+        send("/ch/" + channel(num) + "/config/color",9);
     }
 
     public void highlightFaderGroup(int count) {
         for (int i = offset + 1; i <= offset + count; i++) {
-            try {
-                lastChannel = 0;
-                send("/ch/" + channel(i) + "/config/color",1);
-            } catch (IOException | OSCSerializeException e) {
-                e.printStackTrace();
-            }
+            lastChannel = 0;
+            send("/ch/" + channel(i) + "/config/color",1);
+        }
+    }
+
+    protected void processMessage(OSCMessageEvent event) {
+        OSCMessage msg = event.getMessage();
+        Vector<String> address = address(msg);
+        LOG.debug("processMessage {}",address);
+        String head = address.remove(0);
+        switch (head) {
+            case "ch":
+                processChannelMessage(address, msg);
+                break;
+            default:
+                LOG.info("No action defined for {}…/{}", head, address);
+        }
+    }
+
+    private void processChannelMessage(Vector<String> address, OSCMessage msg) {
+        String head = address.remove(0);
+        try {
+            int channel = Integer.parseInt(head)-1;
+            processChannelMessage(channel,address,msg);
+        } catch (NumberFormatException nfe){
+            LOG.warn("{} is not a channel number!");
+        }
+    }
+
+    private void processChannelMessage(int channel, Vector<String> address, OSCMessage msg) {
+        String head = address.remove(0);
+        switch (head) {
+            case "mix":
+                processChannelMessage(channel,MAIN,address,msg);
+                break;
+            default:
+                LOG.info("Unknown path {} / {}", head, address);
+        }
+    }
+
+    private void processChannelMessage(int channel, int bus, Vector<String> address, OSCMessage msg) {
+        String head = address.remove(0);
+        List<Object> args = msg.getArguments();
+        switch (head) {
+            case "fader":
+                if (args.size()==1) setFader(channel,bus,args.get(0));
+                break;
+            default:
+                LOG.info("Unknown path {} / {}", head, address);
+        }
+    }
+
+    private void requestFaders(){
+        for (int channel = 1; channel<=channels; channel++)
+        send("/ch/"+channel(channel)+"/mix/fader");
+    }
+
+    private void setFader(int channel, int bus, Object o) {
+        if (o instanceof Float){
+            setFader(channel,bus,(float)o);
+        } else {
+            LOG.debug("setFader() no possible, val instance of {}",o.getClass().getSimpleName());
         }
     }
 
@@ -287,31 +303,19 @@ public abstract class XSeries extends AbstractMixer {
 
 
     public void unhighlightBus(int bus) {
-        try {
-            send("/bus/" + channel(bus) + "/config/color",1);
-        } catch (IOException | OSCSerializeException e) {
-            e.printStackTrace();
-        }
+        send("/bus/" + channel(bus) + "/config/color",1);
     }
 
 
     @Override
     public void unhighlightChannel(int num) {
-        try {
-            send("/ch/" + channel(num) + "/config/color",1);
-        } catch (IOException | OSCSerializeException e) {
-            e.printStackTrace();
-        }
+        send("/ch/" + channel(num) + "/config/color",1);
     }
 
 
     public void unhighlightFaderGroup(int count) {
         for (int i = offset + 1; i <= offset + count; i++) {
-            try {
-                send("/ch/" + channel(i) + "/config/color",8);
-            } catch (IOException | OSCSerializeException e) {
-                e.printStackTrace();
-            }
+            send("/ch/" + channel(i) + "/config/color",8);
         }
     }
 }

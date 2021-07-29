@@ -131,7 +131,7 @@ public class NanoKontrol2 implements Controller, Transmitter {
             case FADER6:
             case FADER7:
             case FADER8:
-                mixer.handleFader(data1-FADER1+1,100*data2/127f);
+                mixer.handleFader(data1-FADER1+1,data2/127f);
                 break;
             case POTI1:
             case POTI2:

@@ -23,7 +23,8 @@ public class Gui extends JFrame {
         add(table,BorderLayout.CENTER);
 
         pack();
-        setLocationRelativeTo(null);
+        //setLocationRelativeTo(null);
+        setLocation(4000,0);
         setVisible(true);
     }
 }

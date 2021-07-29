@@ -7,7 +7,7 @@ public interface Mixer {
     void disconnect();
     boolean getMute(int num);
     boolean getSolo(int i);
-    void handleFader(int num, float percent);
+    void handleFader(int num, float normalized);
     boolean handleMute(int num, boolean enabled);
     void handlePoti(int num, float percent);
     boolean handleRec(int num, boolean enabled);
