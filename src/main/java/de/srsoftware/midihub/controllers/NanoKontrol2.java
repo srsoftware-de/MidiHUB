@@ -86,10 +86,15 @@ public class NanoKontrol2 implements Controller, Transmitter {
 
     @Override
     public void close() {
-        mixer.unhighlightFaderGroup(LANES);
-        mixer.close();
         device.getInDevice().close();
         device.getOutDevice().close();
+    }
+
+    @Override
+    public void disconnect() {
+        mixer.unhighlightFaderGroup(LANES);
+        mixer.close();
+        mixer = null;
     }
 
     private void getChannelButtons() {

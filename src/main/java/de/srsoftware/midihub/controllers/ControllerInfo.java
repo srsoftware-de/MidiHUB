@@ -32,6 +32,10 @@ public class ControllerInfo {
         return sb.toString();
     }
 
+    public String getName(){
+        return name;
+    }
+
     public String shortName() {
         return name.split(" ",2)[0].trim();
     }

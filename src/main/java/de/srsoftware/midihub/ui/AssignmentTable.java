@@ -1,17 +1,21 @@
 package de.srsoftware.midihub.ui;
 
+import de.srsoftware.midihub.controllers.Controller;
 import de.srsoftware.midihub.controllers.ControllerInfo;
 import de.srsoftware.midihub.controllers.NanoKontrol2;
+import de.srsoftware.midihub.mixers.Mixer;
 import de.srsoftware.midihub.mixers.MixerInfo;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.util.HashMap;
 
 public class AssignmentTable extends JTable implements MouseListener {
     private static final String NANOKONTROL2 = "nanoKONTROL2";
     private final AssignmentTableModel model;
+    private HashMap<String, Controller> assignedControllers = new HashMap<>();
 
     public AssignmentTable() {
         super();
@@ -30,6 +34,7 @@ public class AssignmentTable extends JTable implements MouseListener {
         if (row > 0 && col > 0) {
             MixerInfo mixer = model.getMixer(row - 1);
             ControllerInfo device = model.getController(col - 1);
+            for (int r = 1; r < model.getRowCount(); r++) model.setValueAt("+",r,col);
             if (assign(device,mixer)) model.setValueAt("connected",row,col);
         }
     }
@@ -55,11 +60,21 @@ public class AssignmentTable extends JTable implements MouseListener {
     }
 
     private boolean assign(ControllerInfo device, MixerInfo mixerInfo) {
+        Controller controller = assignedControllers.get(device.getName());
+        if (controller != null) {
+            controller.disconnect();
+            controller.assign(mixerInfo.getMixer());
+            return true;
+        }
+
         try {
             switch (device.shortName()){
                 case NANOKONTROL2:
-                    NanoKontrol2 receiver = new NanoKontrol2(device);
-                    return receiver.assign(mixerInfo.getMixer());
+                    controller = new NanoKontrol2(device);
+                    if (controller.assign(mixerInfo.getMixer())){
+                        assignedControllers.put(device.getName(),controller);
+                        return true;
+                    }
                 default:
                     LogList.add("Unknown device: {}",device.shortName());
                     return false;
