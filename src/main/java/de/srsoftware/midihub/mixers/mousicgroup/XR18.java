@@ -1,4 +1,4 @@
-package de.srsoftware.midihub.mixers;
+package de.srsoftware.midihub.mixers.mousicgroup;
 
 import com.illposed.osc.OSCMessage;
 import org.slf4j.Logger;
@@ -20,9 +20,17 @@ public class XR18 extends XSeries{
         return "/headamp/" + channel(num) + "/gain";
     }
 
+    @Override
+    public boolean isHighlighted(int color) {
+        return !super.isHighlighted(color);
+    }
+
     void processChannelMessage(int channel, Vector<String> address, OSCMessage msg) {
         String head = address.remove(0);
         switch (head) {
+            case "config":
+                processChannelConfig(channel,address,msg);
+                break;
             case "mix":
                 processChannelBusMessage(channel,address,msg);
                 break;

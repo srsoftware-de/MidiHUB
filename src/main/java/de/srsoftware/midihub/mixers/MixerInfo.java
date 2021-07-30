@@ -1,6 +1,8 @@
 package de.srsoftware.midihub.mixers;
 
 import com.illposed.osc.OSCMessage;
+import de.srsoftware.midihub.mixers.mousicgroup.M32C;
+import de.srsoftware.midihub.mixers.mousicgroup.XR18;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

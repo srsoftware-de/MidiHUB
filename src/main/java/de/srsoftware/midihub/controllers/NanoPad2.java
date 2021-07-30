@@ -1,6 +1,5 @@
 package de.srsoftware.midihub.controllers;
 
-import de.srsoftware.midihub.mixers.Mixer;
 import de.srsoftware.midihub.ui.LogList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

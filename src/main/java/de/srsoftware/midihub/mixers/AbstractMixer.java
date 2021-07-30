@@ -15,17 +15,15 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Vector;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 public abstract class AbstractMixer implements Mixer {
 
     private static final Logger LOG = LoggerFactory.getLogger(AbstractMixer.class);
-    final OSCPortOut sink;
-    final OSCPortIn source;
-    final int buses;
-    final int channels;
+    protected final OSCPortOut sink;
+    protected final OSCPortIn source;
+    protected final int buses;
+    protected final int channels;
 
     private byte[] mutes, solos;
     private float[] gains,panos;
@@ -77,7 +75,7 @@ public abstract class AbstractMixer implements Mixer {
     protected abstract void processMessage(OSCMessageEvent event);
 
 
-    synchronized List<Object> request(OSCPortIn source, String address) {
+    protected synchronized List<Object> request(OSCPortIn source, String address) {
         OSCPacketDispatcher dispatcher = source.getDispatcher();
         OSCPatternAddressMessageSelector selector = new OSCPatternAddressMessageSelector(address);
         CompletableFuture<List<Object>> promise = new CompletableFuture<>();

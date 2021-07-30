@@ -4,7 +4,6 @@ import de.srsoftware.midihub.controllers.Controller;
 import de.srsoftware.midihub.controllers.ControllerInfo;
 import de.srsoftware.midihub.controllers.NanoKontrol2;
 import de.srsoftware.midihub.controllers.NanoPad2;
-import de.srsoftware.midihub.mixers.Mixer;
 import de.srsoftware.midihub.mixers.MixerInfo;
 
 import javax.swing.*;
