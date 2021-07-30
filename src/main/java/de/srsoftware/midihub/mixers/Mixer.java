@@ -21,4 +21,5 @@ public interface Mixer {
     void unhighlightChannel(int num);
     void unhighlightFaderGroup(int count);
     void handleCycle();
+    void play();
 }

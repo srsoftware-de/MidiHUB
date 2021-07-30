@@ -197,6 +197,7 @@ public abstract class XSeries extends AbstractMixer {
 
     @Override
     public boolean handleRec(int num, boolean enabled) {
+        if (enabled && num == 0) send("/xremote");
         return false;
     }
 
@@ -208,13 +209,14 @@ public abstract class XSeries extends AbstractMixer {
 
     @Override
     public boolean handleSolo(int num, boolean enabled) {
-        num += offset;
-        if (num != lastChannel) {
-            unhighlightChannel(lastChannel);
-            highlightChannel(num);
-            lastChannel = num;
+        int channel = num + offset;
+        if (channel != lastChannel) {
+            if (lastChannel != 0) highlightChannel(lastChannel);
+            unhighlightChannel(channel);
+
+            lastChannel = channel;
         }
-        send("/-stat/solosw/" + channel(num),enabled?1:0);
+        send("/-stat/solosw/" + channel(channel),enabled?1:0);
 
         return enabled;
     }
@@ -281,6 +283,18 @@ public abstract class XSeries extends AbstractMixer {
         return color == INVERTED_BLACK || color > BLACK;
     }
 
+    @Override
+    public void play() {
+    }
+
+    private void processAction(Vector<String> address, OSCMessage msg) {
+        String head = address.remove(0);
+        LOG.debug("precessAction({},{})",address,msg.getArguments());
+        if (head.equals("setrtasrc")){
+            processSetRtaSrc(msg);
+        }
+    }
+
     void processGain(int channel, OSCMessage msg) {
         List<Object> args = msg.getArguments();
         if (args.isEmpty()) return;
@@ -295,9 +309,15 @@ public abstract class XSeries extends AbstractMixer {
     protected void processMessage(OSCMessageEvent event) {
         OSCMessage msg = event.getMessage();
         Vector<String> address = address(msg);
-        LOG.debug("processMessage {}",address);
+        LOG.debug("processMessage({}): {}",address,msg.getArguments());
         String head = address.remove(0);
         switch (head) {
+            case "-action":
+                processAction(address,msg);
+                break;
+            case "-stat":
+                processStatusMessage(address,msg);
+                break;
             case "ch":
                 processChannelMessage(address, msg);
                 break;
@@ -308,6 +328,9 @@ public abstract class XSeries extends AbstractMixer {
                 LOG.info("No action defined for {}…/{}", head, address);
         }
     }
+
+
+
 
     private void processChannelMessage(Vector<String> address, OSCMessage msg) {
         String head = address.remove(0);
@@ -375,6 +398,24 @@ public abstract class XSeries extends AbstractMixer {
             LOG.debug("processGain(chnl {}) expected float value, but got {}", channel,o.getClass().getSimpleName());
         }
     }
+
+    private void processRtaSource(OSCMessage msg) {
+        LOG.debug("processRtaSource({})",msg.getArguments());
+    }
+
+    private void processSetRtaSrc(OSCMessage msg) {
+        LOG.debug("processSetRtaSrc({})",msg.getArguments());
+    }
+
+    private void processStatusMessage(Vector<String> address, OSCMessage msg) {
+        LOG.debug("processStatusMessage({},{})",address,msg.getArguments());
+        String head = address.remove(0);
+        if (head.equals("rtasource")){
+            processRtaSource(msg);
+        } else LOG.debug("processStatusMessage({},{}) has no handler for {}",address,msg,head);
+    }
+
+
 
     private void processXINfo(OSCMessage msg) {
         LOG.debug("processXInfo({})",msg.getArguments());

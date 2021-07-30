@@ -180,8 +180,14 @@ public class NanoKontrol2 extends AbstractController {
             case SET:
                 mixer.handleSet();
                 break;
+            case PLAY:
+                if (data2 > 0) mixer.play();
+                break;
             case CYCLE:
                 mixer.handleCycle();
+                break;
+            case REC:
+                mixer.handleRec(0,data2>0);
                 break;
             default:
                 LogList.add("ControlChange @ channel {}: {} / {}",channel,data1,data2);
