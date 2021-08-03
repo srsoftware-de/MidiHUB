@@ -73,6 +73,7 @@ public class NanoKontrol2 extends AbstractController {
     public boolean assign(Mixer mixer) {
         if (super.assign(mixer)) {
             mixer.highlightFaderGroup(LANES);
+            getChannelButtons();
             return true;
         }
         return false;
