@@ -8,6 +8,7 @@ import java.awt.*;
 
 public class Gui extends JFrame {
     private static Logger LOG = LoggerFactory.getLogger(Gui.class);
+    private final AssignmentTable table;
 
     public Gui() {
         super("MidiHub");
@@ -16,15 +17,19 @@ public class Gui extends JFrame {
 
         LogList.setMaxLength(128);
         JScrollPane logScroll = new JScrollPane(LogList.get());
-        logScroll.setPreferredSize(new Dimension(600,300));
+        logScroll.setPreferredSize(new Dimension(800,400));
         add(logScroll,BorderLayout.NORTH);
 
-        JTable table = new AssignmentTable();
+        table = new AssignmentTable();
         add(table,BorderLayout.CENTER);
 
         pack();
         setLocationRelativeTo(null);
         //setLocation(4000,0);
         setVisible(true);
+    }
+
+    public void setAutoConnect(boolean b) {
+        table.setAutoConnect(b);
     }
 }
